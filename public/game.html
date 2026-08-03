@@ -1,773 +1,342 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
-
 <title>بازی مار آنلاین</title>
 
-
 <style>
-
 body{
-
     margin:0;
-    padding:0;
-
-    font-family:Arial;
-
-    text-align:center;
-
-    background:#222;
-
+    font-family:Arial,sans-serif;
+    background:#1e1e1e;
     color:white;
-
+    text-align:center;
 }
 
-
-
-h1{
-
-    margin-top:10px;
-
+.header{
+    background:#2c3e50;
+    padding:15px;
+    font-size:24px;
+    font-weight:bold;
 }
 
-
-
-#info{
-
+.topbar{
     display:flex;
-
     justify-content:center;
-
-    gap:20px;
-
-    font-size:18px;
-
+    gap:30px;
+    padding:10px;
+    font-size:20px;
 }
 
-
+.container{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+    padding:20px;
+}
 
 canvas{
-
-    background:black;
-
-    border:3px solid white;
-
-    margin-top:10px;
-
+    background:#111;
+    border:3px solid #27ae60;
+    border-radius:12px;
 }
 
-
-
-button{
-
-    font-size:22px;
-
+.sidebar{
+    width:300px;
+    background:#2d2d2d;
+    border-radius:12px;
     padding:15px;
-
-    margin:5px;
-
-    border-radius:15px;
-
-    border:none;
-
 }
 
-
-
-#startBtn{
-
-    background:#18a558;
-
-    color:white;
-
+.sidebar h3{
+    color:#27ae60;
+    margin-top:0;
 }
 
-
-
-#exitBtn{
-
-    background:#d9534f;
-
-    color:white;
-
+#players{
+    text-align:right;
+    min-height:120px;
 }
-
-
-
-#controls{
-
-    margin-top:15px;
-
-}
-
-
-
-.dir{
-
-    width:90px;
-
-    height:90px;
-
-    font-size:40px;
-
-}
-
-
-
-.row{
-
-    display:flex;
-
-    justify-content:center;
-
-}
-
-
 
 #messages{
-
-    width:90%;
-
-    max-width:400px;
-
-    height:120px;
-
-    overflow:auto;
-
-    background:white;
-
-    color:black;
-
-    margin:15px auto;
-
-    border-radius:10px;
-
+    background:#1a1a1a;
+    height:180px;
+    overflow-y:auto;
+    border-radius:8px;
+    padding:10px;
+    text-align:right;
+    margin-bottom:10px;
 }
 
+#messages p{
+    margin:5px 0;
+    padding:6px;
+    background:#333;
+    border-radius:6px;
+}
 
+input{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    margin-bottom:10px;
+    box-sizing:border-box;
+}
 
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-size:18px;
+    cursor:pointer;
+    margin-bottom:10px;
+}
+
+#startBtn{
+    background:#f39c12;
+    color:white;
+}
+
+#exitBtn{
+    background:#d9534f;
+    color:white;
+}
+
+.controls{
+    width:330px;
+    margin:20px auto;
+}
+
+.controls .row{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-bottom:15px;
+}
+
+.dir{
+    width:100px;
+    height:100px;
+    font-size:42px;
+    border-radius:18px;
+    background:#34495e;
+    color:white;
+}
+
+.dir:active{
+    background:#27ae60;
+}
+
+.status{
+    margin:10px 0;
+    color:#f1c40f;
+    font-size:18px;
+}
 </style>
-
 </head>
-
 
 <body>
 
+<div class="header">🐍 بازی مار آنلاین</div>
 
-<h1>🐍 بازی مار آنلاین</h1>
-
-
-
-<div id="info">
-
-<div>
-زمان:
-<span id="timer">
-180
-</span>
+<div class="topbar">
+  <div>⏱ زمان: <span id="timer">180</span></div>
+  <div>🏆 امتیاز: <span id="score">0</span></div>
 </div>
 
+<div class="container">
 
-<div>
-امتیاز:
-<span id="score">
-0
-</span>
-</div>
+  <canvas id="game" width="400" height="400"></canvas>
 
+  <div class="sidebar">
 
-</div>
+    <h3>👤 بازیکن</h3>
+    <div id="playerName"></div>
 
+    <div class="status" id="status">در انتظار شروع بازی</div>
 
+    <button id="startBtn" style="display:none">🎮 شروع بازی</button>
 
-<button id="startBtn">
-شروع بازی
-</button>
+    <button id="exitBtn">🚪 خروج از بازی</button>
 
+    <h3>👥 بازیکنان</h3>
+    <div id="players"></div>
 
-<button id="exitBtn">
-خروج از بازی
-</button>
+    <h3>💬 چت</h3>
+    <div id="messages"></div>
 
+    <input id="message" placeholder="پیام خود را بنویس">
+    <button id="sendBtn">ارسال</button>
 
-
-<br>
-
-
-<canvas 
-id="game"
-width="400"
-height="400">
-</canvas>
-
-
-
-<div id="controls">
-
-
-<div class="row">
-
-<button class="dir" onclick="changeDir('up')">
-⬆️
-</button>
+  </div>
 
 </div>
 
+<div class="controls">
 
-<div class="row">
+  <div class="row">
+    <button class="dir" onclick="changeDir('up')">⬆️</button>
+  </div>
 
-<button class="dir" onclick="changeDir('left')">
-⬅️
-</button>
-
-
-<button class="dir" onclick="changeDir('down')">
-⬇️
-</button>
-
-
-<button class="dir" onclick="changeDir('right')">
-➡️
-</button>
-
+  <div class="row">
+    <button class="dir" onclick="changeDir('left')">⬅️</button>
+    <button class="dir" onclick="changeDir('down')">⬇️</button>
+    <button class="dir" onclick="changeDir('right')">➡️</button>
+  </div>
 
 </div>
-
-
-</div>
-
-
-
-<div id="messages"></div>
-
-
 
 <script src="/socket.io/socket.io.js"></script>
 
-
 <script>
-
 
 const socket = io();
 
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
+const name = localStorage.getItem('playerName') || 'بازیکن';
 
-let myId=null;
+document.getElementById('playerName').innerText = name;
 
+let isHost = false;
+let gameStarted = false;
+let players = [];
+let food = {x:0,y:0};
 
-let isHost=false;
+socket.emit('joinGame',{name:name});
 
-
-let gameStarted=false;
-
-
-let players={};
-
-
-let food={x:0,y:0};
-
-
-
-const canvas =
-document.getElementById("game");
-
-
-const ctx =
-canvas.getContext("2d");
-
-
-
-let name =
-prompt("نام خود را وارد کنید");
-
-
-if(!name){
-
-name="بازیکن";
-
-}
-
-
-
-socket.emit(
-"joinGame",
-{
-name:name
-}
-);
-
-
-
-</script>
-// ==========================
-// وضعیت میزبان
-// ==========================
-
-socket.on(
-"hostStatus",
-(status)=>{
-
-
-    isHost=status;
-
-
-    const btn =
-    document.getElementById("startBtn");
-
-
-    if(isHost){
-
-        btn.style.display="inline-block";
-
-    }
-    else{
-
-        btn.style.display="none";
-
-    }
-
-
+socket.on('host',(status)=>{
+  isHost = status;
+  document.getElementById('startBtn').style.display =
+    status ? 'block' : 'none';
 });
 
+socket.on('players',(list)=>{
+  players = list;
 
+  const box = document.getElementById('players');
+  box.innerHTML = '';
 
+  list.forEach(p=>{
+    const div = document.createElement('div');
+    div.innerHTML =
+      (p.alive ? '🟢 ' : '👀 ') +
+      p.name +
+      ' (' + p.score + ')';
+    box.appendChild(div);
+  });
+});
 
-// ==========================
-// شروع بازی
-// ==========================
-
-document
-.getElementById("startBtn")
-.onclick=function(){
-
-
-    if(isHost){
-
-        socket.emit(
-            "startGame"
-        );
-
-    }
-
-
+document.getElementById('startBtn').onclick = ()=>{
+  socket.emit('startGame');
 };
 
-
-
-
-
-// ==========================
-// خروج از بازی
-// ==========================
-
-document
-.getElementById("exitBtn")
-.onclick=function(){
-
-
-    socket.emit(
-        "leaveGame"
-    );
-
-
-    location.href="/";
-
-
-};
-
-
-
-
-
-
-// ==========================
-// شروع شدن بازی
-// ==========================
-
-socket.on(
-"gameStarted",
-(data)=>{
-
-
-    gameStarted=true;
-
-
-    document
-    .getElementById("timer")
-    .innerText=data.time;
-
-
+socket.on('started',(data)=>{
+  gameStarted = true;
+  document.getElementById('status').innerText = 'بازی شروع شد';
+  document.getElementById('timer').innerText = data.time;
 });
 
+socket.on('time',(t)=>{
+  document.getElementById('timer').innerText = t;
+});
 
+socket.on('state',(state)=>{
+  players = state.players;
+  food = state.food;
+  draw();
 
-
-
-
-
-
-// ==========================
-// دریافت وضعیت بازی
-// ==========================
-
-socket.on(
-"gameState",
-(state)=>{
-
-
-    players =
-    state.players;
-
-
-    food =
-    state.food;
-
-
-
-    draw();
-
-
-
-    let me =
-    players.find(
-        p=>p.id===socket.id
-    );
-
-
-
-    if(me){
-
-        document
-        .getElementById("score")
-        .innerText=
-        me.score;
-
+  const me = players.find(p=>p.id===socket.id);
+  if(me){
+    document.getElementById('score').innerText = me.score;
+    if(!me.alive){
+      document.getElementById('status').innerText =
+        'شما سوختید و اکنون تماشاگر هستید';
     }
-
-
-
+  }
 });
 
-
-
-
-
-
-
-// ==========================
-// تایمر
-// ==========================
-
-socket.on(
-"timer",
-(time)=>{
-
-
-    document
-    .getElementById("timer")
-    .innerText=time;
-
-
-
+socket.on('dead',(data)=>{
+  addMessage('🔥 ' + data.name + ' سوخت');
 });
 
-
-
-
-
-
-
-// ==========================
-// رسم بازی
-// ==========================
+socket.on('finished',(data)=>{
+  gameStarted = false;
+  document.getElementById('status').innerText = 'بازی تمام شد';
+  alert(
+    'بازی تمام شد\\n\\nبرنده: ' +
+    data.winner +
+    '\\nامتیاز: ' +
+    data.score
+  );
+});
 
 function draw(){
+  ctx.clearRect(0,0,400,400);
 
+  ctx.fillStyle = 'red';
+  ctx.fillRect(food.x, food.y, 10, 10);
 
-    ctx.clearRect(
-        0,
-        0,
-        400,
-        400
-    );
+  players.forEach(p=>{
+    if(!p.snake) return;
 
+    ctx.fillStyle = p.alive ? '#27ae60' : '#888';
 
-
-    // غذا
-
-    ctx.fillStyle="red";
-
-
-    ctx.fillRect(
-        food.x,
-        food.y,
-        10,
-        10
-    );
-
-
-
-
-    // مارها
-
-    players.forEach(
-    (player)=>{
-
-
-        if(
-            !player.snake
-        ){
-
-            return;
-
-        }
-
-
-
-        ctx.fillStyle =
-        player.alive
-        ?
-        "lime"
-        :
-        "gray";
-
-
-
-        player.snake.forEach(
-        (part)=>{
-
-
-            ctx.fillRect(
-                part.x,
-                part.y,
-                10,
-                10
-            );
-
-
-        });
-
-
-
+    p.snake.forEach(part=>{
+      ctx.fillRect(part.x, part.y, 10, 10);
     });
-
-
-
+  });
 }
-
-
-
-
-
-
-
-// ==========================
-// کنترل جهت
-// ==========================
 
 function changeDir(dir){
-
-
-    if(!gameStarted){
-
-        return;
-
-    }
-
-
-
-    socket.emit(
-        "changeDirection",
-        dir
-    );
-
-
+  if(!gameStarted) return;
+  socket.emit('direction', dir);
 }
 
-
-
-
-
-
-
-// ==========================
-// کنترل کیبورد
-// ==========================
-
-document
-.addEventListener(
-"keydown",
-(e)=>{
-
-
-    if(e.key==="ArrowUp"){
-
-        changeDir("up");
-
-    }
-
-
-    if(e.key==="ArrowDown"){
-
-        changeDir("down");
-
-    }
-
-
-    if(e.key==="ArrowLeft"){
-
-        changeDir("left");
-
-    }
-
-
-    if(e.key==="ArrowRight"){
-
-        changeDir("right");
-
-    }
-
-
-
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowUp') changeDir('up');
+  if(e.key==='ArrowDown') changeDir('down');
+  if(e.key==='ArrowLeft') changeDir('left');
+  if(e.key==='ArrowRight') changeDir('right');
 });
 
-
-
-
-
-// ==========================
-// پیام سوختن
-// ==========================
-
-socket.on(
-"playerDead",
-(data)=>{
-
-
-    addMessage(
-        "🔥 "+data.name+" سوخت"
-    );
-
-
-});
-
-
-
-
-function addMessage(text){
-
-
-    const box =
-    document.getElementById(
-        "messages"
-    );
-
-
-    box.innerHTML +=
-    "<p>"+text+"</p>";
-
-
-
-    box.scrollTop =
-    box.scrollHeight;
-
-
-}
-// ==========================
-// پایان بازی
-// ==========================
-
-socket.on(
-"gameFinished",
-(data)=>{
-
-
-    gameStarted=false;
-
-
-
-    addMessage(
-        "🏆 برنده: "
-        + data.winner
-        + " | امتیاز: "
-        + data.score
-    );
-
-
-
-    alert(
-        "پایان بازی\n\nبرنده: "
-        + data.winner
-        + "\nامتیاز: "
-        + data.score
-    );
-
-
-
-});
-
-
-
-
-// ==========================
-// حالت تماشاگر
-// ==========================
-
-socket.on(
-"playerDead",
-(data)=>{
-
-
-    if(data.name===name){
-
-
-        addMessage(
-            "👀 شما سوختید و اکنون تماشاگر هستید"
-        );
-
-
-    }
-    else{
-
-
-        addMessage(
-            "🔥 "
-            + data.name
-            + " سوخت"
-        );
-
-
-    }
-
-
-});
-
-
-
-
-// ==========================
-// جلوگیری از برگشت اشتباه
-// ==========================
-
-window.onbeforeunload=function(){
-
-
-    socket.emit(
-        "leaveGame"
-    );
-
-
+document.getElementById('sendBtn').onclick = ()=>{
+  const input = document.getElementById('message');
+  const msg = input.value.trim();
+  if(!msg) return;
+  socket.emit('chatMessage', msg);
+  input.value = '';
 };
 
+socket.on('chatMessage',(data)=>{
+  addMessage('💬 ' + data.name + ': ' + data.message);
+});
 
+function addMessage(text){
+  const box = document.getElementById('messages');
+  const p = document.createElement('p');
+  p.innerText = text;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
 
+document.getElementById('exitBtn').onclick = ()=>{
+  socket.emit('leave');
+  localStorage.removeItem('playerName');
+  window.location.href = '/';
+};
+
+window.addEventListener('beforeunload',()=>{
+  socket.emit('leave');
+});
 
 </script>
 
-
 </body>
-
 </html>
+

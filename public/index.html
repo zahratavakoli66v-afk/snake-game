@@ -1,114 +1,174 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
+
 <head>
-  <meta charset="UTF-8">
-  <title>ورود به بازی مار آنلاین</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      direction: rtl;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
 
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 30px;
-    }
-
-    .container {
-      width: 360px;
-      margin: 0 auto;
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #27ae60;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #219150;
-    }
-
-    .info {
-      margin-top: 20px;
-      color: #555;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-  </style>
-</head>
-
-<body>
-
-<h1>🐍 بازی مار آنلاین</h1>
-
-<div class="container">
-
-  <h2>ورود به بازی</h2>
-
-  <input id="name" placeholder="نام بازیکن" maxlength="20">
-
-  <button onclick="joinGame()">ورود به بازی</button>
-
-  <div class="info">
-    بعد از ورود، وارد صفحه بازی می‌شوی و می‌توانی با دوستانت آنلاین بازی کنی.
-  </div>
-
-</div>
-
-<script>
-
-function joinGame(){
-
-  const name =
-  document.getElementById('name').value.trim();
+<title>ورود به بازی مار</title>
 
 
-  if(name === ''){
+<style>
 
-    alert('لطفاً نام خود را وارد کنید');
+body{
 
-    return;
+    font-family:Arial;
 
-  }
+    text-align:center;
 
+    background:#222;
 
-  // ذخیره نام بازیکن
+    color:white;
 
-  localStorage.setItem('playerName', name);
-
-
-  // انتقال به صفحه بازی
-
-  window.location.href = 'game.html';
+    padding-top:80px;
 
 }
 
+
+.box{
+
+    background:#333;
+
+    width:300px;
+
+    margin:auto;
+
+    padding:30px;
+
+    border-radius:15px;
+
+}
+
+
+
+input{
+
+    width:90%;
+
+    padding:12px;
+
+    font-size:18px;
+
+    border-radius:10px;
+
+    border:none;
+
+}
+
+
+
+button{
+
+    margin-top:20px;
+
+    padding:15px 30px;
+
+    font-size:20px;
+
+    border-radius:10px;
+
+    border:none;
+
+    background:#18a558;
+
+    color:white;
+
+    cursor:pointer;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<div class="box">
+
+
+<h1>🐍 بازی مار آنلاین</h1>
+
+
+<p>
+نام خود را وارد کنید
+</p>
+
+
+<input
+id="name"
+placeholder="نام بازیکن"
+>
+
+
+
+<br>
+
+
+<button onclick="enterGame()">
+
+ورود به بازی
+
+</button>
+
+
+</div>
+
+
+
+
+
+<script>
+
+
+function enterGame(){
+
+
+let name =
+document.getElementById("name")
+.value
+.trim();
+
+
+
+if(name===""){
+
+
+alert(
+"لطفاً نام وارد کنید"
+);
+
+
+return;
+
+
+}
+
+
+
+
+localStorage.setItem(
+"playerName",
+name
+);
+
+
+
+location.href=
+"/game.html";
+
+
+
+}
+
+
 </script>
 
+
+
 </body>
+
 </html>

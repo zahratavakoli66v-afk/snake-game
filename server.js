@@ -2,288 +2,174 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 
+
 const app = express();
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
-});
+const io = new Server(server);
+
 
 
 app.use(express.static("public"));
 
 
-// =======================
+
+// =====================
 // تنظیمات بازی
-// =======================
+// =====================
 
-const GAME_TIME = 180; // سه دقیقه
+const PORT = process.env.PORT || 10000;
 
-const BOARD_SIZE = 400;
+const WIDTH = 400;
 
-const SPEED = 300;
+const HEIGHT = 400;
+
+const STEP = 10;
+
+const GAME_TIME = 180;
 
 
-// =======================
-// وضعیت کلی بازی
-// =======================
 
-let gameStarted = false;
-
-let gameFinished = false;
-
-let hostId = null;
-
-let timer = GAME_TIME;
-
-let timerInterval = null;
-
+// =====================
+// اطلاعات بازی
+// =====================
 
 let players = {};
 
+let host = null;
+
+let gameRunning = false;
+
+let gameTimer = GAME_TIME;
+
+let timer = null;
+
+
 let food = {
-  x: 200,
-  y: 200
+    x:200,
+    y:200
 };
 
 
 
-// =======================
-// ساخت بازیکن جدید
-// =======================
-
-function createPlayer(id, name){
-
-  return {
-
-    id:id,
-
-    name:name,
-
-    x:50 + Math.floor(Math.random()*300),
-
-    y:50 + Math.floor(Math.random()*300),
 
 
-    direction:"right",
+// =====================
+// ساخت بازیکن
+// =====================
+
+function createPlayer(id,name){
+
+    return {
+
+        id:id,
+
+        name:name,
+
+        x:100,
+
+        y:100,
+
+        snake:[
+            {x:100,y:100},
+            {x:90,y:100},
+            {x:80,y:100}
+        ],
 
 
-    nextDirection:"right",
+        direction:"right",
+
+        nextDirection:"right",
 
 
-    snake:[
-
-      {x:50,y:50},
-
-      {x:40,y:50},
-
-      {x:30,y:50}
-
-    ],
+        score:0,
 
 
-    score:0,
+        alive:true,
 
 
-    alive:true,
+        spectator:false
 
-
-    spectator:false
-
-  };
+    };
 
 }
 
 
 
-// =======================
-// تولید غذا
-// =======================
 
-function createFood(){
+// =====================
+// غذای جدید
+// =====================
 
-  food = {
+function newFood(){
 
-    x:Math.floor(Math.random()*38)*10,
+    food={
 
-    y:Math.floor(Math.random()*38)*10
+        x:Math.floor(Math.random()*39)*STEP,
 
-  };
+        y:Math.floor(Math.random()*39)*STEP
+
+    };
 
 }
-// =======================
-// اتصال بازیکنان
-// =======================
 
-io.on("connection", (socket)=>{
 
 
-  console.log(
-    "بازیکن وصل شد:",
-    socket.id
-  );
 
 
 
-  // ورود بازیکن
+// =====================
+// اتصال کاربر
+// =====================
 
-  socket.on("joinGame",(data)=>{
+io.on("connection",(socket)=>{
 
 
-    const name =
-    data.name || "بازیکن";
+console.log(
+"player connected:",
+socket.id
+);
 
 
-    // اولین نفر میزبان می‌شود
 
-    if(hostId === null){
 
-      hostId = socket.id;
+socket.on("joinGame",(data)=>{
 
-    }
 
+let name =
+data.name || "player";
 
 
-    players[socket.id] =
-    createPlayer(
-      socket.id,
-      name
-    );
 
+players[socket.id] =
+createPlayer(
+socket.id,
+name
+);
 
 
-    io.emit(
-      "players",
-      getPlayersInfo()
-    );
 
 
+if(!host){
 
-    socket.emit(
-      "hostStatus",
-      socket.id === hostId
-    );
+    host=socket.id;
 
+}
 
 
-  });
 
+socket.emit(
+"host",
+socket.id===host
+);
 
 
 
-
-  // شروع بازی توسط میزبان
-
-  socket.on("startGame",()=>{
-
-
-    if(socket.id !== hostId){
-
-      return;
-
-    }
-
-
-
-    if(gameStarted){
-
-      return;
-
-    }
-
-
-
-    gameStarted = true;
-
-    gameFinished = false;
-
-    timer = GAME_TIME;
-
-
-
-    startTimer();
-
-
-
-    io.emit(
-      "gameStarted",
-      {
-        time:timer
-      }
-    );
-
-
-
-  });
-
-
-
-
-
-  // تغییر جهت مار
-
-  socket.on(
-    "changeDirection",
-    (direction)=>{
-
-
-      const player =
-      players[socket.id];
-
-
-      if(!player){
-
-        return;
-
-      }
-
-
-
-      if(!player.alive){
-
-        return;
-
-      }
-
-
-
-      player.nextDirection =
-      direction;
-
-
-
-  });
-
-
-
-
-
-  // خروج بازیکن
-
-  socket.on("leaveGame",()=>{
-
-
-    removePlayer(socket.id);
-
-
-  });
-
-
-
-
-
-  // قطع اتصال
-
-  socket.on("disconnect",()=>{
-
-
-    removePlayer(socket.id);
-
-
-  });
+io.emit(
+"players",
+Object.values(players)
+);
 
 
 
@@ -293,34 +179,163 @@ io.on("connection", (socket)=>{
 
 
 
-// =======================
-// اطلاعات قابل ارسال
-// =======================
+socket.on("startGame",()=>{
 
 
-function getPlayersInfo(){
+if(socket.id!==host){
+
+return;
+
+}
 
 
-  return Object.values(players)
-  .map(player=>{
+if(gameRunning){
+
+return;
+
+}
 
 
-    return {
 
-      id:player.id,
-
-      name:player.name,
-
-      score:player.score,
-
-      alive:player.alive,
-
-      spectator:player.spectator
-
-    };
+startGame();
 
 
-  });
+
+});
+
+
+
+
+
+socket.on("direction",(dir)=>{
+
+
+let p=players[socket.id];
+
+
+if(!p){
+
+return;
+
+}
+
+
+if(!p.alive){
+
+return;
+
+}
+
+
+
+p.nextDirection=dir;
+
+
+
+});
+
+
+
+
+
+socket.on("leave",()=>{
+
+
+removePlayer(socket.id);
+
+
+
+});
+
+
+
+
+
+socket.on("disconnect",()=>{
+
+
+removePlayer(socket.id);
+
+
+
+});
+
+
+
+});
+
+// =====================
+// شروع بازی
+// =====================
+
+function startGame(){
+
+
+gameRunning=true;
+
+gameTimer=GAME_TIME;
+
+
+Object.values(players)
+.forEach(p=>{
+
+
+p.alive=true;
+
+p.spectator=false;
+
+p.score=0;
+
+
+});
+
+
+
+newFood();
+
+
+
+io.emit(
+"started",
+{
+time:gameTimer
+}
+);
+
+
+
+if(timer){
+
+clearInterval(timer);
+
+}
+
+
+
+timer=setInterval(()=>{
+
+
+gameTimer--;
+
+
+
+io.emit(
+"time",
+gameTimer
+);
+
+
+
+if(gameTimer<=0){
+
+endGame();
+
+}
+
+
+
+},1000);
+
 
 
 }
@@ -329,198 +344,171 @@ function getPlayersInfo(){
 
 
 
-// =======================
-// شروع تایمر
-// =======================
 
-function startTimer(){
-
-
-  if(timerInterval){
-
-    clearInterval(timerInterval);
-
-  }
-
-
-
-  timerInterval =
-  setInterval(()=>{
-
-
-    if(!gameStarted){
-
-      return;
-
-    }
-
-
-
-    timer--;
-
-
-
-    io.emit(
-      "timer",
-      timer
-    );
-
-
-
-    if(timer <= 0){
-
-
-      endGame();
-
-
-    }
-
-
-
-  },1000);
-
-
-
-}
-// =======================
-// حلقه بازی
-// =======================
+// =====================
+// حرکت بازی
+// =====================
 
 setInterval(()=>{
 
 
-  if(!gameStarted || gameFinished){
+if(!gameRunning){
 
-    return;
+return;
 
-  }
+}
 
 
 
-  Object.values(players)
-  .forEach(player=>{
+Object.values(players)
+.forEach(player=>{
 
 
-    if(!player.alive){
+if(!player.alive){
 
-      return;
+return;
 
-    }
+}
 
 
 
-    movePlayer(player);
+move(player);
 
 
 
-    checkFood(player);
+check(player);
 
 
 
-    checkCollision(player);
+});
 
 
 
-  });
+io.emit(
+"state",
+{
 
+players:Object.values(players),
 
+food:food
 
-  io.emit(
-    "gameState",
-    {
+}
+);
 
-      players:Object.values(players),
 
-      food:food,
 
-      time:timer
+},150);
 
-    }
-  );
 
 
 
-}, SPEED);
 
 
 
+// =====================
+// حرکت مار
+// =====================
 
+function move(player){
 
 
+player.direction =
+player.nextDirection;
 
-// =======================
-// حرکت بازیکن
-// =======================
 
-function movePlayer(player){
 
+let head={
 
-  player.direction =
-  player.nextDirection;
+x:player.snake[0].x,
 
+y:player.snake[0].y
 
+};
 
-  let head =
-  {
-    x:player.snake[0].x,
-    y:player.snake[0].y
-  };
 
 
 
-  if(player.direction==="up"){
+if(player.direction==="up"){
 
-    head.y -= 10;
+head.y-=STEP;
 
-  }
+}
 
 
-  if(player.direction==="down"){
+if(player.direction==="down"){
 
-    head.y += 10;
+head.y+=STEP;
 
-  }
+}
 
 
-  if(player.direction==="left"){
+if(player.direction==="left"){
 
-    head.x -= 10;
+head.x-=STEP;
 
-  }
+}
 
 
-  if(player.direction==="right"){
+if(player.direction==="right"){
 
-    head.x += 10;
+head.x+=STEP;
 
-  }
+}
 
 
 
 
 
-  // برخورد با دیوار
+// برخورد با دیوار
 
-  if(
-    head.x < 0 ||
-    head.y < 0 ||
-    head.x >= BOARD_SIZE ||
-    head.y >= BOARD_SIZE
-  ){
 
-    playerDie(player);
+if(
 
-    return;
+head.x<0 ||
 
-  }
+head.y<0 ||
 
+head.x>=WIDTH ||
 
+head.y>=HEIGHT
 
-  player.snake.unshift(head);
+){
 
 
+die(player);
 
-  player.snake.pop();
+return;
+
+
+}
+
+
+
+
+player.snake.unshift(head);
+
+
+
+if(
+head.x===food.x &&
+head.y===food.y
+){
+
+
+player.score++;
+
+
+newFood();
+
+
+}
+else{
+
+
+player.snake.pop();
+
+
+}
 
 
 
@@ -532,79 +520,40 @@ function movePlayer(player){
 
 
 
-// =======================
-// خوردن غذا
-// =======================
-
-function checkFood(player){
-
-
-  let head =
-  player.snake[0];
-
-
-
-  if(
-    head.x === food.x &&
-    head.y === food.y
-  ){
-
-
-    player.score++;
-
-
-
-    let last =
-    player.snake[player.snake.length-1];
-
-
-    player.snake.push(last);
-
-
-
-    createFood();
-
-
-  }
-
-
-
-}
-
-
-
-
-
-
-
-// =======================
+// =====================
 // برخورد
-// =======================
+// =====================
 
-function checkCollision(player){
-
-
-  let head =
-  player.snake[0];
+function check(player){
 
 
-
-  for(let i=1;i<player.snake.length;i++){
-
-
-    if(
-      head.x === player.snake[i].x &&
-      head.y === player.snake[i].y
-    ){
-
-      playerDie(player);
-
-      return;
-
-    }
+let head=player.snake[0];
 
 
-  }
+
+for(
+let i=1;
+i<player.snake.length;
+i++
+){
+
+
+if(
+
+head.x===player.snake[i].x &&
+
+head.y===player.snake[i].y
+
+){
+
+
+die(player);
+
+
+}
+
+
+}
 
 
 
@@ -615,31 +564,28 @@ function checkCollision(player){
 
 
 
-
-// =======================
+// =====================
 // سوختن بازیکن
-// =======================
+// =====================
 
-function playerDie(player){
-
-
-  player.alive=false;
-
-  player.spectator=true;
+function die(player){
 
 
+player.alive=false;
 
-  io.emit(
-    "playerDead",
-    {
-      name:player.name
-    }
-  );
+
+player.spectator=true;
 
 
 
-  // اگر میزبان سوخت
-  // بازی ادامه پیدا می‌کند
+io.emit(
+"dead",
+{
+name:player.name
+}
+);
+
+
 
 }
 
@@ -649,55 +595,58 @@ function playerDie(player){
 
 
 
-// =======================
+// =====================
 // حذف بازیکن
-// =======================
+// =====================
 
 function removePlayer(id){
 
 
-  delete players[id];
+delete players[id];
 
 
 
-  // اگر میزبان خارج شد
-  // میزبان جدید انتخاب شود
-
-  if(id===hostId){
+if(id===host){
 
 
-    const ids =
-    Object.keys(players);
+let ids=
+Object.keys(players);
 
 
 
-    if(ids.length>0){
-
-      hostId=ids[0];
+if(ids.length){
 
 
-      io.to(hostId)
-      .emit(
-        "hostStatus",
-        true
-      );
-
-    }
-    else{
-
-      hostId=null;
-
-    }
+host=ids[0];
 
 
-  }
+io.to(host)
+.emit(
+"host",
+true
+);
 
 
 
-  io.emit(
-    "players",
-    getPlayersInfo()
-  );
+}
+else{
+
+
+host=null;
+
+
+}
+
+
+
+}
+
+
+
+io.emit(
+"players",
+Object.values(players)
+);
 
 
 
@@ -709,58 +658,66 @@ function removePlayer(id){
 
 
 
-// =======================
+// =====================
 // پایان بازی
-// =======================
+// =====================
 
 function endGame(){
 
 
-  gameFinished=true;
-
-  gameStarted=false;
+gameRunning=false;
 
 
+if(timer){
 
-  if(timerInterval){
+clearInterval(timer);
 
-    clearInterval(timerInterval);
-
-  }
+}
 
 
 
-  let winner=null;
-
-
-  Object.values(players)
-  .forEach(player=>{
-
-
-    if(
-      !winner ||
-      player.score > winner.score
-    ){
-
-      winner=player;
-
-    }
-
-
-  });
+let winner=null;
 
 
 
-  io.emit(
-    "gameFinished",
-    {
+Object.values(players)
+.forEach(p=>{
 
-      winner:winner ? winner.name : "بدون برنده",
 
-      score:winner ? winner.score : 0
+if(
 
-    }
-  );
+!winner ||
+
+p.score>winner.score
+
+){
+
+winner=p;
+
+}
+
+
+});
+
+
+
+
+io.emit(
+"finished",
+{
+
+
+winner:
+winner ? winner.name : "none",
+
+
+score:
+winner ? winner.score : 0
+
+
+}
+);
+
 
 
 }
@@ -771,24 +728,20 @@ function endGame(){
 
 
 
-// =======================
+// =====================
 // اجرای سرور
-// =======================
-
-const PORT =
-process.env.PORT || 10000;
-
-
+// =====================
 
 server.listen(
-  PORT,
-  ()=>{
+PORT,
+()=>{
 
-    console.log(
-      "سرور بازی روی پورت",
-      PORT,
-      "اجرا شد"
-    );
 
-  }
+console.log(
+"Server running on port",
+PORT
 );
+
+
+
+});

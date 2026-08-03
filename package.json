@@ -1,17 +1,25 @@
 {
-  "name": "snake-server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
-  }
+"name": "snake-server",
+"version": "1.0.0",
+"description": "Online multiplayer snake game",
+"main": "server.js",
+"scripts": {
+"start": "node server.js"
+},
+"keywords": [
+"snake",
+"multiplayer",
+"socket.io",
+"express"
+],
+"author": "zahratavakoli66v-afk",
+"license": "ISC",
+"type": "commonjs",
+"dependencies": {
+"express": "^5.2.1",
+"socket.io": "^4.8.3"
+},
+"engines": {
+"node": ">=18"
+}
 }
