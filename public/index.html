@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>بازی مار آنلاین</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      direction: rtl;
+      background: #f2f2f2;
+    }
+
+    input {
+      padding: 10px;
+      margin: 5px;
+      width: 200px;
+    }
+
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    #players {
+      background: white;
+      width: 300px;
+      margin: 20px auto;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    #messages {
+      background: white;
+      width: 300px;
+      height: 200px;
+      overflow-y: auto;
+      margin: 20px auto;
+      padding: 10px;
+      text-align: right;
+      border-radius: 10px;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<h1>🐍 بازی مار آنلاین</h1>
+
+<p>نام خود را وارد کنید</p>
+
+<input id="name" placeholder="نام بازیکن">
+
+<br>
+
+<button onclick="joinGame()">ورود به بازی</button>
+
+
+<h2>👥 بازیکنان آنلاین</h2>
+
+<div id="players">
+  هنوز کسی وارد نشده
+</div>
+
+
+<h2>💬 چت</h2>
+
+<div id="messages"></div>
+
+<input id="message" placeholder="پیام خود را بنویس">
+
+<button onclick="sendMessage()">ارسال</button>
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+
+const socket = io();
+
+
+function joinGame(){
+
+  const name =
+  document.getElementById('name').value.trim();
+
+
+  if(name === ''){
+    alert('لطفاً نام خود را وارد کنید');
+    return;
+  }
+
+
+  socket.emit('joinGame',{
+    name:name
+  });
+
+
+  alert('وارد بازی شدی: ' + name);
+
+}
+
+
+
+// دریافت لیست بازیکنان
+
+socket.on('playersList',(players)=>{
+
+
+  const box =
+  document.getElementById('players');
+
+
+  box.innerHTML='';
+
+
+  players.forEach(player=>{
+
+    box.innerHTML +=
+    '<p>🐍 ' + player + '</p>';
+
+  });
+
+
+});
+
+
+
+// ارسال پیام
+
+function sendMessage(){
+
+  const msg =
+  document.getElementById('message').value.trim();
+
+
+  if(msg==='') return;
+
+
+  socket.emit('chatMessage',msg);
+
+
+  document.getElementById('message').value='';
+
+}
+
+
+
+// دریافت پیام
+
+socket.on('chatMessage',(data)=>{
+
+
+  const box =
+  document.getElementById('messages');
+
+
+  box.innerHTML +=
+  '<p><b>' 
+  + data.name 
+  + ':</b> ' 
+  + data.message
+  + '</p>';
+
+
+  box.scrollTop = box.scrollHeight;
+
+
+});
+
+
+</script>
+
+
+</body>
+</html>
