@@ -6,55 +6,88 @@
 
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       text-align: center;
       direction: rtl;
       background: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #2c3e50;
     }
 
     input {
       padding: 10px;
       margin: 5px;
-      width: 200px;
+      width: 220px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
 
     button {
       padding: 10px 20px;
       cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background: #27ae60;
+      color: white;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #219150;
     }
 
     #players {
       background: white;
-      width: 300px;
+      width: 340px;
       margin: 20px auto;
       padding: 10px;
       border-radius: 10px;
+      min-height: 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-   #messages {
-  background: white;
-  width: 300px;
-  height: 200px;
-  overflow-y: auto;
-  margin: 20px auto;
-  padding: 10px;
-  text-align: right;
-  border-radius: 10px;
+    #messages {
+      background: white;
+      width: 340px;
+      height: 260px;
+      overflow-y: auto;
+      margin: 20px auto;
+      padding: 10px;
+      text-align: right;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 
-  display: flex;
-  flex-direction: column;
+      display: flex;
+      flex-direction: column;
 
-  scroll-behavior: smooth;
-}
+      scroll-behavior: smooth;
+    }
 
+    #messages p {
+      margin: 6px 0;
+      padding: 8px;
+      background: #f8f8f8;
+      border-radius: 6px;
+      word-wrap: break-word;
+    }
 
-#messages p {
-  margin: 5px;
-  padding: 5px;
-  border-bottom: 1px solid #ddd;
-}
+    #messages b {
+      color: #2980b9;
+    }
+
+    .chat-box {
+      width: 340px;
+      margin: 0 auto;
+    }
+
+    .chat-box input {
+      width: 240px;
+    }
   </style>
-
 </head>
 
 <body>
@@ -77,14 +110,14 @@
 </div>
 
 
-<h2>💬 چت</h2>
+<h2>💬 چت آنلاین</h2>
 
 <div id="messages"></div>
 
-<input id="message" placeholder="پیام خود را بنویس">
-
-<button onclick="sendMessage()">ارسال</button>
-
+<div class="chat-box">
+  <input id="message" placeholder="پیام خود را بنویس">
+  <button onclick="sendMessage()">ارسال</button>
+</div>
 
 
 <script src="/socket.io/socket.io.js"></script>
@@ -99,7 +132,7 @@ const socket = io();
 function joinGame(){
 
   const name =
-  document.getElementById('name').value.trim();
+  document.getElementById("name").value.trim();
 
 
   if(name === ''){
@@ -151,11 +184,11 @@ socket.on('playersList',(players)=>{
 
 
     const item =
-    document.createElement("p");
+    document.createElement('p');
 
 
     item.innerHTML =
-    "🐍 " + player;
+    '🐍 ' + player;
 
 
     box.appendChild(item);
@@ -170,7 +203,7 @@ socket.on('playersList',(players)=>{
 
 
 
-// ارسال پیام چت
+// ارسال پیام
 
 function sendMessage(){
 
@@ -204,7 +237,7 @@ function sendMessage(){
 
 
 
-// دریافت پیام چت
+// دریافت پیام
 
 socket.on('chatMessage',(data)=>{
 
@@ -215,15 +248,15 @@ socket.on('chatMessage',(data)=>{
 
 
   const message =
-  document.createElement("p");
+  document.createElement('p');
 
 
 
   message.innerHTML =
 
-  "<b>"
+  '<b>'
   + data.name
-  + ":</b> "
+  + ':</b> '
   + data.message;
 
 
@@ -244,7 +277,6 @@ socket.on('chatMessage',(data)=>{
 
 
 </script>
-
 
 </body>
 </html>
