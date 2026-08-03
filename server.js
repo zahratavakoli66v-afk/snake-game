@@ -1,747 +1,252 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
 
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
-
 const server = http.createServer(app);
-
 const io = new Server(server);
 
-
-
-app.use(express.static("public"));
-
-
-
-// =====================
-// تنظیمات بازی
-// =====================
+app.use(express.static('public'));
 
 const PORT = process.env.PORT || 10000;
 
-const WIDTH = 400;
-
-const HEIGHT = 400;
-
-const STEP = 10;
-
-const GAME_TIME = 180;
-
-
-
-// =====================
-// اطلاعات بازی
-// =====================
-
-let players = {};
-
-let host = null;
-
-let gameRunning = false;
-
-let gameTimer = GAME_TIME;
-
-let timer = null;
-
-
-let food = {
-    x:200,
-    y:200
+// وضعیت کلی
+let players = {};        // socket.id -> player
+let usernames = new Set();
+let queue = [];          // صف انتظار
+let game = {
+  playerTop: null,
+  playerBottom: null,
+  running: false,
+  timer: 180,
+  interval: null,
+  timerInterval: null,
+  ball: {
+    x: 200,
+    y: 300,
+    vx: 3,
+    vy: -4
+  }
 };
 
-
-
-
-
-// =====================
-// ساخت بازیکن
-// =====================
-
-function createPlayer(id,name){
-
-    return {
-
-        id:id,
-
-        name:name,
-
-        x:100,
-
-        y:100,
-
-        snake:[
-            {x:100,y:100},
-            {x:90,y:100},
-            {x:80,y:100}
-        ],
-
-
-        direction:"right",
-
-        nextDirection:"right",
-
-
-        score:0,
-
-
-        alive:true,
-
-
-        spectator:false
-
-    };
-
+function createPlayer(id, name) {
+  return {
+    id,
+    name,
+    score: 0,
+    totalScore: 0,
+    paddleX: 150,
+    ready: false
+  };
 }
 
-
-
-
-// =====================
-// غذای جدید
-// =====================
-
-function newFood(){
-
-    food={
-
-        x:Math.floor(Math.random()*39)*STEP,
-
-        y:Math.floor(Math.random()*39)*STEP
-
-    };
-
+function broadcastPlayers() {
+  io.emit('playersList', Object.values(players).map(p => ({
+    name: p.name,
+    totalScore: p.totalScore
+  })));
 }
 
+function assignPlayers() {
+  if (!game.playerBottom && queue.length > 0) {
+    game.playerBottom = queue.shift();
+  }
 
+  if (!game.playerTop && queue.length > 0) {
+    game.playerTop = queue.shift();
+  }
 
+  io.emit('queueUpdate', {
+    top: game.playerTop ? players[game.playerTop].name : null,
+    bottom: game.playerBottom ? players[game.playerBottom].name : null,
+    queue: queue.map(id => players[id].name)
+  });
 
-
-
-// =====================
-// اتصال کاربر
-// =====================
-
-io.on("connection",(socket)=>{
-
-
-console.log(
-"player connected:",
-socket.id
-);
-
-
-
-
-socket.on("joinGame",(data)=>{
-
-
-let name =
-data.name || "player";
-
-
-
-players[socket.id] =
-createPlayer(
-socket.id,
-name
-);
-
-
-
-
-if(!host){
-
-    host=socket.id;
-
+  if (game.playerTop && game.playerBottom) {
+    startMatch();
+  }
 }
 
+function resetBall(direction = -1) {
+  game.ball.x = 200;
+  game.ball.y = 300;
+  game.ball.vx = (Math.random() > 0.5 ? 3 : -3);
+  game.ball.vy = 4 * direction;
+}
 
+function startMatch() {
+  if (game.running) return;
 
-socket.emit(
-"host",
-socket.id===host
-);
+  game.running = true;
+  game.timer = 180;
 
+  players[game.playerTop].score = 0;
+  players[game.playerBottom].score = 0;
 
+  resetBall(-1);
 
-io.emit(
-"players",
-Object.values(players)
-);
+  io.emit('matchStarted', {
+    top: players[game.playerTop].name,
+    bottom: players[game.playerBottom].name
+  });
 
+  game.interval = setInterval(updateGame, 16);
 
+  game.timerInterval = setInterval(() => {
+    game.timer--;
+    io.emit('timer', game.timer);
 
+    if (game.timer <= 0) {
+      finishMatch();
+    }
+  }, 1000);
+}
+
+function finishMatch() {
+  clearInterval(game.interval);
+  clearInterval(game.timerInterval);
+
+  game.running = false;
+
+  const top = players[game.playerTop];
+  const bottom = players[game.playerBottom];
+
+  let winnerId = null;
+  let loserId = null;
+
+  if (top.score >= bottom.score) {
+    winnerId = game.playerTop;
+    loserId = game.playerBottom;
+  } else {
+    winnerId = game.playerBottom;
+    loserId = game.playerTop;
+  }
+
+  players[winnerId].totalScore += 10;
+
+  queue.push(loserId);
+
+  if (winnerId === game.playerTop) {
+    game.playerBottom = null;
+  } else {
+    game.playerTop = null;
+  }
+
+  io.emit('matchFinished', {
+    winner: players[winnerId].name,
+    totalScore: players[winnerId].totalScore
+  });
+
+  broadcastPlayers();
+  assignPlayers();
+}
+
+function updateGame() {
+  const ball = game.ball;
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // برخورد با دیوارهای چپ و راست
+  if (ball.x <= 0 || ball.x >= 400) {
+    ball.vx *= -1;
+  }
+
+  // برخورد با راکت پایین
+  if (
+    game.playerBottom &&
+    ball.y >= 570 &&
+    ball.x >= players[game.playerBottom].paddleX &&
+    ball.x <= players[game.playerBottom].paddleX + 100
+  ) {
+    ball.vy = -Math.abs(ball.vy);
+    ball.vx += (ball.x - (players[game.playerBottom].paddleX + 50)) / 25;
+  }
+
+  // برخورد با راکت بالا
+  if (
+    game.playerTop &&
+    ball.y <= 30 &&
+    ball.x >= players[game.playerTop].paddleX &&
+    ball.x <= players[game.playerTop].paddleX + 100
+  ) {
+    ball.vy = Math.abs(ball.vy);
+    ball.vx += (ball.x - (players[game.playerTop].paddleX + 50)) / 25;
+  }
+
+  // امتیاز پایین
+  if (ball.y < 0) {
+    players[game.playerBottom].score++;
+    resetBall(-1);
+  }
+
+  // امتیاز بالا
+  if (ball.y > 600) {
+    players[game.playerTop].score++;
+    resetBall(1);
+  }
+
+  io.emit('gameState', {
+    ball,
+    top: players[game.playerTop]
+      ? {
+          name: players[game.playerTop].name,
+          paddleX: players[game.playerTop].paddleX,
+          score: players[game.playerTop].score
+        }
+      : null,
+    bottom: players[game.playerBottom]
+      ? {
+          name: players[game.playerBottom].name,
+          paddleX: players[game.playerBottom].paddleX,
+          score: players[game.playerBottom].score
+        }
+      : null
+  });
+}
+
+io.on('connection', socket => {
+  socket.on('join', ({ name }) => {
+    if (usernames.has(name)) {
+      socket.emit('joinError', 'این نام قبلاً استفاده شده است');
+      return;
+    }
+
+    usernames.add(name);
+
+    players[socket.id] = createPlayer(socket.id, name);
+
+    queue.push(socket.id);
+
+    broadcastPlayers();
+    assignPlayers();
+  });
+
+  socket.on('movePaddle', x => {
+    if (!players[socket.id]) return;
+
+    players[socket.id].paddleX = Math.max(0, Math.min(300, x));
+  });
+
+  socket.on('disconnect', () => {
+    if (!players[socket.id]) return;
+
+    usernames.delete(players[socket.id].name);
+
+    queue = queue.filter(id => id !== socket.id);
+
+    if (game.playerTop === socket.id) game.playerTop = null;
+    if (game.playerBottom === socket.id) game.playerBottom = null;
+
+    delete players[socket.id];
+
+    broadcastPlayers();
+    assignPlayers();
+  });
 });
 
-
-
-
-
-socket.on("startGame",()=>{
-
-
-if(socket.id!==host){
-
-return;
-
-}
-
-
-if(gameRunning){
-
-return;
-
-}
-
-
-
-startGame();
-
-
-
+server.listen(PORT, () => {
+  console.log('Server running on port', PORT);
 });
 
-
-
-
-
-socket.on("direction",(dir)=>{
-
-
-let p=players[socket.id];
-
-
-if(!p){
-
-return;
-
-}
-
-
-if(!p.alive){
-
-return;
-
-}
-
-
-
-p.nextDirection=dir;
-
-
-
-});
-
-
-
-
-
-socket.on("leave",()=>{
-
-
-removePlayer(socket.id);
-
-
-
-});
-
-
-
-
-
-socket.on("disconnect",()=>{
-
-
-removePlayer(socket.id);
-
-
-
-});
-
-
-
-});
-
-// =====================
-// شروع بازی
-// =====================
-
-function startGame(){
-
-
-gameRunning=true;
-
-gameTimer=GAME_TIME;
-
-
-Object.values(players)
-.forEach(p=>{
-
-
-p.alive=true;
-
-p.spectator=false;
-
-p.score=0;
-
-
-});
-
-
-
-newFood();
-
-
-
-io.emit(
-"started",
-{
-time:gameTimer
-}
-);
-
-
-
-if(timer){
-
-clearInterval(timer);
-
-}
-
-
-
-timer=setInterval(()=>{
-
-
-gameTimer--;
-
-
-
-io.emit(
-"time",
-gameTimer
-);
-
-
-
-if(gameTimer<=0){
-
-endGame();
-
-}
-
-
-
-},1000);
-
-
-
-}
-
-
-
-
-
-
-// =====================
-// حرکت بازی
-// =====================
-
-setInterval(()=>{
-
-
-if(!gameRunning){
-
-return;
-
-}
-
-
-
-Object.values(players)
-.forEach(player=>{
-
-
-if(!player.alive){
-
-return;
-
-}
-
-
-
-move(player);
-
-
-
-check(player);
-
-
-
-});
-
-
-
-io.emit(
-"state",
-{
-
-players:Object.values(players),
-
-food:food
-
-}
-);
-
-
-
-},150);
-
-
-
-
-
-
-
-// =====================
-// حرکت مار
-// =====================
-
-function move(player){
-
-
-player.direction =
-player.nextDirection;
-
-
-
-let head={
-
-x:player.snake[0].x,
-
-y:player.snake[0].y
-
-};
-
-
-
-
-if(player.direction==="up"){
-
-head.y-=STEP;
-
-}
-
-
-if(player.direction==="down"){
-
-head.y+=STEP;
-
-}
-
-
-if(player.direction==="left"){
-
-head.x-=STEP;
-
-}
-
-
-if(player.direction==="right"){
-
-head.x+=STEP;
-
-}
-
-
-
-
-
-// برخورد با دیوار
-
-
-if(
-
-head.x<0 ||
-
-head.y<0 ||
-
-head.x>=WIDTH ||
-
-head.y>=HEIGHT
-
-){
-
-
-die(player);
-
-return;
-
-
-}
-
-
-
-
-player.snake.unshift(head);
-
-
-
-if(
-head.x===food.x &&
-head.y===food.y
-){
-
-
-player.score++;
-
-
-newFood();
-
-
-}
-else{
-
-
-player.snake.pop();
-
-
-}
-
-
-
-}
-
-
-
-
-
-
-
-// =====================
-// برخورد
-// =====================
-
-function check(player){
-
-
-let head=player.snake[0];
-
-
-
-for(
-let i=1;
-i<player.snake.length;
-i++
-){
-
-
-if(
-
-head.x===player.snake[i].x &&
-
-head.y===player.snake[i].y
-
-){
-
-
-die(player);
-
-
-}
-
-
-}
-
-
-
-}
-
-
-
-
-
-
-// =====================
-// سوختن بازیکن
-// =====================
-
-function die(player){
-
-
-player.alive=false;
-
-
-player.spectator=true;
-
-
-
-io.emit(
-"dead",
-{
-name:player.name
-}
-);
-
-
-
-}
-
-
-
-
-
-
-
-// =====================
-// حذف بازیکن
-// =====================
-
-function removePlayer(id){
-
-
-delete players[id];
-
-
-
-if(id===host){
-
-
-let ids=
-Object.keys(players);
-
-
-
-if(ids.length){
-
-
-host=ids[0];
-
-
-io.to(host)
-.emit(
-"host",
-true
-);
-
-
-
-}
-else{
-
-
-host=null;
-
-
-}
-
-
-
-}
-
-
-
-io.emit(
-"players",
-Object.values(players)
-);
-
-
-
-}
-
-
-
-
-
-
-
-// =====================
-// پایان بازی
-// =====================
-
-function endGame(){
-
-
-gameRunning=false;
-
-
-if(timer){
-
-clearInterval(timer);
-
-}
-
-
-
-let winner=null;
-
-
-
-Object.values(players)
-.forEach(p=>{
-
-
-if(
-
-!winner ||
-
-p.score>winner.score
-
-){
-
-winner=p;
-
-}
-
-
-});
-
-
-
-
-io.emit(
-"finished",
-{
-
-
-winner:
-winner ? winner.name : "none",
-
-
-score:
-winner ? winner.score : 0
-
-
-}
-);
-
-
-
-}
-
-
-
-
-
-
-
-// =====================
-// اجرای سرور
-// =====================
-
-server.listen(
-PORT,
-()=>{
-
-
-console.log(
-"Server running on port",
-PORT
-);
-
-
-
-});

@@ -3,338 +3,298 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>بازی مار آنلاین</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تنیس آنلاین</title>
 
 <style>
 body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#1e1e1e;
-    color:white;
-    text-align:center;
+  margin:0;
+  background:#0f172a;
+  color:white;
+  font-family:Tahoma,Arial;
+  overflow:hidden;
 }
 
-.header{
-    background:#2c3e50;
-    padding:15px;
-    font-size:24px;
-    font-weight:bold;
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:#111827;
+  font-size:18px;
 }
 
-.topbar{
-    display:flex;
-    justify-content:center;
-    gap:30px;
-    padding:10px;
-    font-size:20px;
+#status{
+  text-align:center;
+  padding:8px;
+  color:#fbbf24;
 }
 
-.container{
-    display:flex;
-    justify-content:center;
-    gap:20px;
-    flex-wrap:wrap;
-    padding:20px;
+#court{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:calc(100vh - 160px);
 }
 
 canvas{
-    background:#111;
-    border:3px solid #27ae60;
-    border-radius:12px;
+  background:#111827;
+  border:3px solid #22c55e;
+  border-radius:16px;
+  touch-action:none;
 }
 
-.sidebar{
-    width:300px;
-    background:#2d2d2d;
-    border-radius:12px;
-    padding:15px;
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#111827;
+  padding:10px;
 }
 
-.sidebar h3{
-    color:#27ae60;
-    margin-top:0;
+#queue{
+  text-align:center;
+  margin-bottom:8px;
 }
 
 #players{
-    text-align:right;
-    min-height:120px;
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  flex-wrap:wrap;
 }
 
-#messages{
-    background:#1a1a1a;
-    height:180px;
-    overflow-y:auto;
-    border-radius:8px;
-    padding:10px;
-    text-align:right;
-    margin-bottom:10px;
-}
-
-#messages p{
-    margin:5px 0;
-    padding:6px;
-    background:#333;
-    border-radius:6px;
-}
-
-input{
-    width:100%;
-    padding:10px;
-    border:none;
-    border-radius:8px;
-    margin-bottom:10px;
-    box-sizing:border-box;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    font-size:18px;
-    cursor:pointer;
-    margin-bottom:10px;
-}
-
-#startBtn{
-    background:#f39c12;
-    color:white;
-}
-
-#exitBtn{
-    background:#d9534f;
-    color:white;
-}
-
-.controls{
-    width:330px;
-    margin:20px auto;
-}
-
-.controls .row{
-    display:flex;
-    justify-content:center;
-    gap:15px;
-    margin-bottom:15px;
-}
-
-.dir{
-    width:100px;
-    height:100px;
-    font-size:42px;
-    border-radius:18px;
-    background:#34495e;
-    color:white;
-}
-
-.dir:active{
-    background:#27ae60;
-}
-
-.status{
-    margin:10px 0;
-    color:#f1c40f;
-    font-size:18px;
+.player{
+  background:#1f2937;
+  padding:8px 12px;
+  border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🐍 بازی مار آنلاین</div>
-
-<div class="topbar">
-  <div>⏱ زمان: <span id="timer">180</span></div>
-  <div>🏆 امتیاز: <span id="score">0</span></div>
+<div class="top">
+  <div>⏱ <span id="timer">180</span></div>
+  <div id="match">در انتظار بازیکن</div>
+  <div id="me"></div>
 </div>
 
-<div class="container">
+<div id="status">برای حرکت راکت، انگشت خود را روی زمین بازی بکشید.</div>
 
-  <canvas id="game" width="400" height="400"></canvas>
-
-  <div class="sidebar">
-
-    <h3>👤 بازیکن</h3>
-    <div id="playerName"></div>
-
-    <div class="status" id="status">در انتظار شروع بازی</div>
-
-    <button id="startBtn" style="display:none">🎮 شروع بازی</button>
-
-    <button id="exitBtn">🚪 خروج از بازی</button>
-
-    <h3>👥 بازیکنان</h3>
-    <div id="players"></div>
-
-    <h3>💬 چت</h3>
-    <div id="messages"></div>
-
-    <input id="message" placeholder="پیام خود را بنویس">
-    <button id="sendBtn">ارسال</button>
-
-  </div>
-
+<div id="court">
+  <canvas id="game" width="400" height="600"></canvas>
 </div>
 
-<div class="controls">
-
-  <div class="row">
-    <button class="dir" onclick="changeDir('up')">⬆️</button>
-  </div>
-
-  <div class="row">
-    <button class="dir" onclick="changeDir('left')">⬅️</button>
-    <button class="dir" onclick="changeDir('down')">⬇️</button>
-    <button class="dir" onclick="changeDir('right')">➡️</button>
-  </div>
-
+<div class="bottom">
+  <div id="queue">صف انتظار: -</div>
+  <div id="players"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-
 <script>
-
 const socket = io();
 
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-const name = localStorage.getItem('playerName') || 'بازیکن';
+const name =
+  localStorage.getItem("tennisName") ||
+  "بازیکن";
 
-document.getElementById('playerName').innerText = name;
+document.getElementById("me").innerText = name;
 
-let isHost = false;
-let gameStarted = false;
-let players = [];
-let food = {x:0,y:0};
+let myRole = "spectator";
+let gameState = null;
 
-socket.emit('joinGame',{name:name});
+// ورود
+socket.emit("join", { name });
 
-socket.on('host',(status)=>{
-  isHost = status;
-  document.getElementById('startBtn').style.display =
-    status ? 'block' : 'none';
+// نام تکراری
+socket.on("joinError", msg => {
+  alert(msg);
+  localStorage.removeItem("tennisName");
+  location.href = "/";
 });
 
-socket.on('players',(list)=>{
-  players = list;
+// شروع مسابقه
+socket.on("matchStarted", data => {
+  document.getElementById("match").innerText =
+    data.bottom + " vs " + data.top;
 
-  const box = document.getElementById('players');
-  box.innerHTML = '';
-
-  list.forEach(p=>{
-    const div = document.createElement('div');
-    div.innerHTML =
-      (p.alive ? '🟢 ' : '👀 ') +
-      p.name +
-      ' (' + p.score + ')';
-    box.appendChild(div);
-  });
+  if(data.bottom===name) myRole="bottom";
+  else if(data.top===name) myRole="top";
+  else myRole="spectator";
 });
 
-document.getElementById('startBtn').onclick = ()=>{
-  socket.emit('startGame');
-};
-
-socket.on('started',(data)=>{
-  gameStarted = true;
-  document.getElementById('status').innerText = 'بازی شروع شد';
-  document.getElementById('timer').innerText = data.time;
+// تایمر
+socket.on("timer", t => {
+  document.getElementById("timer").innerText = t;
 });
 
-socket.on('time',(t)=>{
-  document.getElementById('timer').innerText = t;
+// صف انتظار
+socket.on("queueUpdate", data => {
+  const q =
+    data.queue.length ?
+    data.queue.join(" ، ") :
+    "خالی";
+
+  document.getElementById("queue").innerText =
+    "صف انتظار: " + q;
 });
 
-socket.on('state',(state)=>{
-  players = state.players;
-  food = state.food;
-  draw();
+// جدول امتیازات
+socket.on("playersList", list => {
+  const box = document.getElementById("players");
+  box.innerHTML = "";
 
-  const me = players.find(p=>p.id===socket.id);
-  if(me){
-    document.getElementById('score').innerText = me.score;
-    if(!me.alive){
-      document.getElementById('status').innerText =
-        'شما سوختید و اکنون تماشاگر هستید';
-    }
-  }
+  list
+    .sort((a,b)=>b.totalScore-a.totalScore)
+    .forEach(p => {
+      const div = document.createElement("div");
+      div.className = "player";
+      div.innerText =
+        p.name + " : " + p.totalScore;
+      box.appendChild(div);
+    });
 });
 
-socket.on('dead',(data)=>{
-  addMessage('🔥 ' + data.name + ' سوخت');
-});
-
-socket.on('finished',(data)=>{
-  gameStarted = false;
-  document.getElementById('status').innerText = 'بازی تمام شد';
+// پایان مسابقه
+socket.on("matchFinished", data => {
   alert(
-    'بازی تمام شد\\n\\nبرنده: ' +
+    "برنده: " +
     data.winner +
-    '\\nامتیاز: ' +
-    data.score
+    "\\nامتیاز کل: " +
+    data.totalScore
   );
 });
 
+// وضعیت بازی
+socket.on("gameState", state => {
+  gameState = state;
+  draw();
+});
+
+// رسم
 function draw(){
-  ctx.clearRect(0,0,400,400);
 
-  ctx.fillStyle = 'red';
-  ctx.fillRect(food.x, food.y, 10, 10);
+  if(!gameState) return;
 
-  players.forEach(p=>{
-    if(!p.snake) return;
+  ctx.clearRect(0,0,400,600);
 
-    ctx.fillStyle = p.alive ? '#27ae60' : '#888';
+  // زمین
+  ctx.strokeStyle = "#374151";
+  ctx.setLineDash([10,10]);
+  ctx.beginPath();
+  ctx.moveTo(0,300);
+  ctx.lineTo(400,300);
+  ctx.stroke();
+  ctx.setLineDash([]);
 
-    p.snake.forEach(part=>{
-      ctx.fillRect(part.x, part.y, 10, 10);
-    });
-  });
+  // توپ
+  ctx.fillStyle = "#facc15";
+  ctx.beginPath();
+  ctx.arc(
+    gameState.ball.x,
+    gameState.ball.y,
+    8,
+    0,
+    Math.PI*2
+  );
+  ctx.fill();
+
+  // راکت پایین
+  if(gameState.bottom){
+    drawPaddle(
+      gameState.bottom.paddleX,
+      580,
+      "#22c55e"
+    );
+
+    drawScore(
+      gameState.bottom.score,
+      360,
+      560
+    );
+  }
+
+  // راکت بالا
+  if(gameState.top){
+    drawPaddle(
+      gameState.top.paddleX,
+      10,
+      "#ef4444"
+    );
+
+    drawScore(
+      gameState.top.score,
+      360,
+      40
+    );
+  }
+
+  // اگر بازیکن بالا هستیم،
+  // زمین را برعکس نمایش بده
+  if(myRole==="top"){
+    // در نسخه کامل،
+    // مختصات برعکس رندر می‌شود.
+    // فعلاً فقط نقش مشخص شده است.
+  }
+
 }
 
-function changeDir(dir){
-  if(!gameStarted) return;
-  socket.emit('direction', dir);
+function drawPaddle(x,y,color){
+  ctx.fillStyle = color;
+  ctx.fillRect(x,y,100,10);
 }
 
-document.addEventListener('keydown',(e)=>{
-  if(e.key==='ArrowUp') changeDir('up');
-  if(e.key==='ArrowDown') changeDir('down');
-  if(e.key==='ArrowLeft') changeDir('left');
-  if(e.key==='ArrowRight') changeDir('right');
-});
-
-document.getElementById('sendBtn').onclick = ()=>{
-  const input = document.getElementById('message');
-  const msg = input.value.trim();
-  if(!msg) return;
-  socket.emit('chatMessage', msg);
-  input.value = '';
-};
-
-socket.on('chatMessage',(data)=>{
-  addMessage('💬 ' + data.name + ': ' + data.message);
-});
-
-function addMessage(text){
-  const box = document.getElementById('messages');
-  const p = document.createElement('p');
-  p.innerText = text;
-  box.appendChild(p);
-  box.scrollTop = box.scrollHeight;
+function drawScore(score,x,y){
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText(score,x,y);
 }
 
-document.getElementById('exitBtn').onclick = ()=>{
-  socket.emit('leave');
-  localStorage.removeItem('playerName');
-  window.location.href = '/';
-};
+// کنترل با لمس
+canvas.addEventListener("touchmove", e => {
 
-window.addEventListener('beforeunload',()=>{
-  socket.emit('leave');
+  e.preventDefault();
+
+  const rect =
+    canvas.getBoundingClientRect();
+
+  const touch =
+    e.touches[0];
+
+  const x =
+    touch.clientX - rect.left - 50;
+
+  socket.emit(
+    "movePaddle",
+    x
+  );
+
 });
 
+// کنترل با ماوس
+canvas.addEventListener("mousemove", e => {
+
+  const rect =
+    canvas.getBoundingClientRect();
+
+  const x =
+    e.clientX - rect.left - 50;
+
+  socket.emit(
+    "movePaddle",
+    x
+  );
+
+});
+
+window.addEventListener("beforeunload", () => {
+  socket.disconnect();
+});
 </script>
 
 </body>

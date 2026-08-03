@@ -1,13 +1,13 @@
 {
-"name": "snake-server",
+"name": "online-pong",
 "version": "1.0.0",
-"description": "Online multiplayer snake game",
+"description": "Online multiplayer pong game with queue system",
 "main": "server.js",
 "scripts": {
 "start": "node server.js"
 },
 "keywords": [
-"snake",
+"pong",
 "multiplayer",
 "socket.io",
 "express"
