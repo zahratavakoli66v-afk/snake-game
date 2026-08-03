@@ -12,13 +12,13 @@
       direction: rtl;
       background: #1e1e1e;
       color: white;
+      text-align: center;
     }
 
     .header {
       background: #2c3e50;
       padding: 15px;
-      text-align: center;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
     }
 
@@ -38,19 +38,19 @@
     }
 
     .sidebar {
-      width: 280px;
+      width: 300px;
       background: #2d2d2d;
       border-radius: 10px;
       padding: 15px;
     }
 
     .sidebar h3 {
-      margin-top: 0;
       color: #27ae60;
+      margin-top: 0;
     }
 
     #players {
-      min-height: 120px;
+      min-height: 100px;
       margin-bottom: 20px;
     }
 
@@ -61,6 +61,7 @@
       border-radius: 8px;
       padding: 10px;
       margin-bottom: 10px;
+      text-align: right;
     }
 
     #messages p {
@@ -90,6 +91,7 @@
       background: #27ae60;
       color: white;
       cursor: pointer;
+      font-size: 16px;
     }
 
     button:hover {
@@ -97,12 +99,57 @@
     }
 
     .back {
-      margin-top: 15px;
+      margin-top: 10px;
       background: #c0392b;
     }
 
     .back:hover {
       background: #a93226;
+    }
+
+    /* کنترل‌های جهت */
+    .controls {
+      margin: 20px auto;
+      width: 220px;
+      display: grid;
+      grid-template-columns: 70px 70px 70px;
+      grid-template-rows: 70px 70px;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .control-btn {
+      width: 70px;
+      height: 70px;
+      font-size: 28px;
+      background: #34495e;
+      border-radius: 12px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .control-btn:active {
+      background: #27ae60;
+      transform: scale(0.95);
+    }
+
+    .empty {
+      visibility: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      canvas {
+        width: 90vw;
+        height: 90vw;
+        max-width: 500px;
+        max-height: 500px;
+      }
     }
   </style>
 
@@ -122,29 +169,32 @@
 
 ```
 <h3>👤 بازیکن</h3>
-
 <p id="playerName"></p>
 
 <h3>👥 بازیکنان آنلاین</h3>
-
-<div id="players">
-  در حال اتصال...
-</div>
+<div id="players">در حال اتصال...</div>
 
 <h3>💬 چت</h3>
-
 <div id="messages"></div>
 
 <input id="message" placeholder="پیام خود را بنویس">
-
 <button onclick="sendMessage()">ارسال</button>
 
-<button class="back" onclick="exitGame()">
-  خروج از بازی
-</button>
+<button class="back" onclick="exitGame()">خروج از بازی</button>
 ```
 
   </div>
+
+</div>
+
+<!-- دکمه‌های جهت -->
+
+<div class="controls">
+  <div class="empty"></div>
+  <button class="control-btn" onclick="setDirection('UP')">⬆️</button>
+  <div class="empty"></div>
+
+<button class="control-btn" onclick="setDirection('LEFT')">⬅️</button> <button class="control-btn" onclick="setDirection('DOWN')">⬇️</button> <button class="control-btn" onclick="setDirection('RIGHT')">➡️</button>
 
 </div>
 
@@ -163,76 +213,151 @@ socket.emit('joinGame', { name });
 
 // لیست بازیکنان
 socket.on('playersList', (players) => {
-
   const box = document.getElementById('players');
-
   box.innerHTML = '';
-
   players.forEach(player => {
-
     const p = document.createElement('p');
-
     p.innerText = '🐍 ' + player;
-
     box.appendChild(p);
-
   });
-
 });
 
 // ارسال پیام
 function sendMessage(){
-
   const input = document.getElementById('message');
-
   const msg = input.value.trim();
-
   if(msg === '') return;
-
   socket.emit('chatMessage', msg);
-
   input.value = '';
-
 }
 
 // دریافت پیام
 socket.on('chatMessage', (data) => {
-
   const box = document.getElementById('messages');
-
   const p = document.createElement('p');
-
   p.innerHTML = '<b>' + data.name + ':</b> ' + data.message;
-
   box.appendChild(p);
-
   box.scrollTop = box.scrollHeight;
-
 });
 
-// خروج از بازی
+// خروج
 function exitGame(){
-
   localStorage.removeItem('playerName');
-
   window.location.href = 'index.html';
-
 }
 
-// زمین بازی (فعلاً نمونه)
+// ======== بازی مار ========
+
 const canvas = document.getElementById('gameCanvas');
-
 const ctx = canvas.getContext('2d');
+const grid = 20;
 
-ctx.fillStyle = '#27ae60';
+let snake = [
+  {x:10, y:10},
+  {x:9, y:10},
+  {x:8, y:10}
+];
 
-ctx.fillRect(220, 220, 20, 20);
+let direction = 'RIGHT';
 
-ctx.fillStyle = 'white';
+let food = { x:15, y:12 };
+let score = 0;
 
-ctx.font = '18px Arial';
+// تغییر جهت
+function setDirection(dir){
+  if(dir === 'UP' && direction !== 'DOWN') direction = 'UP';
+  if(dir === 'DOWN' && direction !== 'UP') direction = 'DOWN';
+  if(dir === 'LEFT' && direction !== 'RIGHT') direction = 'LEFT';
+  if(dir === 'RIGHT' && direction !== 'LEFT') direction = 'RIGHT';
+}
 
-ctx.fillText('مرحله بعد: حرکت مار', 140, 40);
+// کیبورد
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'ArrowUp') setDirection('UP');
+  if(e.key === 'ArrowDown') setDirection('DOWN');
+  if(e.key === 'ArrowLeft') setDirection('LEFT');
+  if(e.key === 'ArrowRight') setDirection('RIGHT');
+});
+
+// رسم
+function draw(){
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'red';
+  ctx.fillRect(food.x * grid, food.y * grid, grid, grid);
+
+  ctx.fillStyle = '#27ae60';
+  snake.forEach(part => {
+    ctx.fillRect(part.x * grid, part.y * grid, grid, grid);
+  });
+
+  ctx.fillStyle = 'white';
+  ctx.font = '18px Arial';
+  ctx.fillText('امتیاز: ' + score, 10, 25);
+}
+
+// حرکت
+function update(){
+  const head = { x: snake[0].x, y: snake[0].y };
+
+  if(direction === 'UP') head.y--;
+  if(direction === 'DOWN') head.y++;
+  if(direction === 'LEFT') head.x--;
+  if(direction === 'RIGHT') head.x++;
+
+  if(
+    head.x < 0 ||
+    head.y < 0 ||
+    head.x >= canvas.width / grid ||
+    head.y >= canvas.height / grid
+  ){
+    alert('بازی تمام شد! امتیاز: ' + score);
+    resetGame();
+    return;
+  }
+
+  for(let part of snake){
+    if(part.x === head.x && part.y === head.y){
+      alert('بازی تمام شد! امتیاز: ' + score);
+      resetGame();
+      return;
+    }
+  }
+
+  snake.unshift(head);
+
+  if(head.x === food.x && head.y === food.y){
+    score++;
+    food = {
+      x: Math.floor(Math.random() * (canvas.width / grid)),
+      y: Math.floor(Math.random() * (canvas.height / grid))
+    };
+  }else{
+    snake.pop();
+  }
+}
+
+// ریست
+function resetGame(){
+  snake = [
+    {x:10, y:10},
+    {x:9, y:10},
+    {x:8, y:10}
+  ];
+  direction = 'RIGHT';
+  score = 0;
+  food = { x:15, y:12 };
+}
+
+// حلقه بازی
+function gameLoop(){
+  update();
+  draw();
+}
+
+draw();
+setInterval(gameLoop, 150);
 
 </script>
 
