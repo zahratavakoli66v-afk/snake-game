@@ -95,11 +95,14 @@ io.on("connection", (socket) => {
 
 
 
-// اجرای سرور
-server.listen(3000, () => {
+// پورت مناسب برای Render
+const PORT = process.env.PORT || 3000;
+
+
+server.listen(PORT, () => {
 
     console.log(
-        "سرور بازی روی پورت 3000 اجرا شد"
+        "سرور بازی روی پورت " + PORT + " اجرا شد"
     );
 
 });
