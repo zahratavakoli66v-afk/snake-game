@@ -31,16 +31,28 @@
       border-radius: 10px;
     }
 
-    #messages {
-      background: white;
-      width: 300px;
-      height: 200px;
-      overflow-y: auto;
-      margin: 20px auto;
-      padding: 10px;
-      text-align: right;
-      border-radius: 10px;
-    }
+   #messages {
+  background: white;
+  width: 300px;
+  height: 200px;
+  overflow-y: auto;
+  margin: 20px auto;
+  padding: 10px;
+  text-align: right;
+  border-radius: 10px;
+
+  display: flex;
+  flex-direction: column;
+
+  scroll-behavior: smooth;
+}
+
+
+#messages p {
+  margin: 5px;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+}
   </style>
 
 </head>
@@ -77,11 +89,12 @@
 
 <script src="/socket.io/socket.io.js"></script>
 
-
 <script>
 
 const socket = io();
 
+
+// ورود به بازی
 
 function joinGame(){
 
@@ -90,13 +103,18 @@ function joinGame(){
 
 
   if(name === ''){
+
     alert('لطفاً نام خود را وارد کنید');
+
     return;
+
   }
 
 
   socket.emit('joinGame',{
+
     name:name
+
   });
 
 
@@ -118,39 +136,75 @@ socket.on('playersList',(players)=>{
   box.innerHTML='';
 
 
+  if(players.length === 0){
+
+    box.innerHTML =
+    '<p>هنوز کسی وارد نشده</p>';
+
+    return;
+
+  }
+
+
+
   players.forEach(player=>{
 
-    box.innerHTML +=
-    '<p>🐍 ' + player + '</p>';
+
+    const item =
+    document.createElement("p");
+
+
+    item.innerHTML =
+    "🐍 " + player;
+
+
+    box.appendChild(item);
+
 
   });
+
 
 
 });
 
 
 
-// ارسال پیام
+
+// ارسال پیام چت
 
 function sendMessage(){
 
+
+  const input =
+  document.getElementById('message');
+
+
   const msg =
-  document.getElementById('message').value.trim();
+  input.value.trim();
 
 
-  if(msg==='') return;
+
+  if(msg === '') return;
 
 
-  socket.emit('chatMessage',msg);
+
+  socket.emit(
+    'chatMessage',
+    msg
+  );
 
 
-  document.getElementById('message').value='';
+
+  input.value='';
+
 
 }
 
 
 
-// دریافت پیام
+
+
+// دریافت پیام چت
 
 socket.on('chatMessage',(data)=>{
 
@@ -159,18 +213,34 @@ socket.on('chatMessage',(data)=>{
   document.getElementById('messages');
 
 
-  box.innerHTML +=
-  '<p><b>' 
-  + data.name 
-  + ':</b> ' 
-  + data.message
-  + '</p>';
+
+  const message =
+  document.createElement("p");
 
 
-  box.scrollTop = box.scrollHeight;
+
+  message.innerHTML =
+
+  "<b>"
+  + data.name
+  + ":</b> "
+  + data.message;
+
+
+
+  box.appendChild(message);
+
+
+
+  // همیشه آخرین پیام دیده شود
+
+  box.scrollTop =
+  box.scrollHeight;
+
 
 
 });
+
 
 
 </script>
