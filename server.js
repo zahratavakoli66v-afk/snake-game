@@ -7,80 +7,99 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// نمایش فایل‌های پوشه public
 app.use(express.static('public'));
 
 let players = {};
 let hostId = null;
 let gameStarted = false;
 
+// اتصال بازیکنان
 io.on('connection', (socket) => {
 
-  socket.on('joinGame', (data) => {
+    console.log('بازیکن وصل شد:', socket.id);
 
-    players[socket.id] = data.name;
+    // ورود به بازی
+    socket.on('joinGame', (data) => {
 
-    // اولین بازیکن میزبان می‌شود
-    if(!hostId){
-      hostId = socket.id;
-    }
+        players[socket.id] = data.name;
 
-    io.emit('playersList', Object.values(players));
+        // اولین بازیکن میزبان می‌شود
+        if (!hostId) {
+            hostId = socket.id;
+        }
 
-    io.emit('hostInfo', {
-      hostId,
-      gameStarted
+        io.emit('playersList', Object.values(players));
+
+        io.emit('hostInfo', {
+            hostId: hostId,
+            gameStarted: gameStarted
+        });
+
     });
 
-  });
+    // شروع بازی
+    socket.on('startGame', () => {
 
-  socket.on('startGame', () => {
+        if (socket.id !== hostId) return;
 
-    if(socket.id !== hostId) return;
+        gameStarted = true;
 
-    gameStarted = true;
+        io.emit('gameStarted');
 
-    io.emit('gameStarted');
+        io.emit('hostInfo', {
+            hostId: hostId,
+            gameStarted: gameStarted
+        });
 
-  });
-
-  socket.on('chatMessage', (message) => {
-
-    io.emit('chatMessage', {
-      name: players[socket.id],
-      message
     });
 
-  });
+    // پیام چت
+    socket.on('chatMessage', (message) => {
 
-  socket.on('disconnect', () => {
+        io.emit('chatMessage', {
+            name: players[socket.id],
+            message: message
+        });
 
-    delete players[socket.id];
-
-    // اگر میزبان خارج شد
-    if(socket.id === hostId){
-
-      const ids = Object.keys(players);
-
-      hostId = ids.length ? ids[0] : null;
-
-      gameStarted = false;
-
-    }
-
-    io.emit('playersList', Object.values(players));
-
-    io.emit('hostInfo', {
-      hostId,
-      gameStarted
     });
 
-  });
+    // خروج بازیکن
+    socket.on('disconnect', () => {
+
+        console.log('بازیکن خارج شد:', players[socket.id]);
+
+        delete players[socket.id];
+
+        // اگر میزبان خارج شد
+        if (socket.id === hostId) {
+
+            const ids = Object.keys(players);
+
+            if (ids.length > 0) {
+                hostId = ids[0];
+            } else {
+                hostId = null;
+                gameStarted = false;
+            }
+
+        }
+
+        io.emit('playersList', Object.values(players));
+
+        io.emit('hostInfo', {
+            hostId: hostId,
+            gameStarted: gameStarted
+        });
+
+    });
 
 });
 
+// اجرای سرور
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-  console.log('Server running on port ' + PORT);
+    console.log('سرور بازی روی پورت ' + PORT + ' اجرا شد');
 });
-```
+
