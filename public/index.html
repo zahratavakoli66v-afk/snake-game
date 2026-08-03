@@ -2,7 +2,7 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>بازی مار آنلاین</title>
+  <title>ورود به بازی مار آنلاین</title>
 
   <style>
     body {
@@ -16,76 +16,48 @@
 
     h1 {
       color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      width: 360px;
+      margin: 0 auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
 
     input {
-      padding: 10px;
-      margin: 5px;
-      width: 220px;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
     }
 
     button {
-      padding: 10px 20px;
-      cursor: pointer;
+      width: 100%;
+      padding: 12px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       background: #27ae60;
       color: white;
-      font-size: 14px;
+      font-size: 16px;
+      cursor: pointer;
     }
 
     button:hover {
       background: #219150;
     }
 
-    #players {
-      background: white;
-      width: 340px;
-      margin: 20px auto;
-      padding: 10px;
-      border-radius: 10px;
-      min-height: 60px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    #messages {
-      background: white;
-      width: 340px;
-      height: 260px;
-      overflow-y: auto;
-      margin: 20px auto;
-      padding: 10px;
-      text-align: right;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
-      display: flex;
-      flex-direction: column;
-
-      scroll-behavior: smooth;
-    }
-
-    #messages p {
-      margin: 6px 0;
-      padding: 8px;
-      background: #f8f8f8;
-      border-radius: 6px;
-      word-wrap: break-word;
-    }
-
-    #messages b {
-      color: #2980b9;
-    }
-
-    .chat-box {
-      width: 340px;
-      margin: 0 auto;
-    }
-
-    .chat-box input {
-      width: 240px;
+    .info {
+      margin-top: 20px;
+      color: #555;
+      font-size: 14px;
+      line-height: 1.8;
     }
   </style>
 </head>
@@ -94,45 +66,26 @@
 
 <h1>🐍 بازی مار آنلاین</h1>
 
-<p>نام خود را وارد کنید</p>
+<div class="container">
 
-<input id="name" placeholder="نام بازیکن">
+  <h2>ورود به بازی</h2>
 
-<br>
+  <input id="name" placeholder="نام بازیکن" maxlength="20">
 
-<button onclick="joinGame()">ورود به بازی</button>
+  <button onclick="joinGame()">ورود به بازی</button>
 
+  <div class="info">
+    بعد از ورود، وارد صفحه بازی می‌شوی و می‌توانی با دوستانت آنلاین بازی کنی.
+  </div>
 
-<h2>👥 بازیکنان آنلاین</h2>
-
-<div id="players">
-  هنوز کسی وارد نشده
 </div>
-
-
-<h2>💬 چت آنلاین</h2>
-
-<div id="messages"></div>
-
-<div class="chat-box">
-  <input id="message" placeholder="پیام خود را بنویس">
-  <button onclick="sendMessage()">ارسال</button>
-</div>
-
-
-<script src="/socket.io/socket.io.js"></script>
 
 <script>
-
-const socket = io();
-
-
-// ورود به بازی
 
 function joinGame(){
 
   const name =
-  document.getElementById("name").value.trim();
+  document.getElementById('name').value.trim();
 
 
   if(name === ''){
@@ -144,137 +97,16 @@ function joinGame(){
   }
 
 
-  socket.emit('joinGame',{
+  // ذخیره نام بازیکن
 
-    name:name
-
-  });
+  localStorage.setItem('playerName', name);
 
 
-  alert('وارد بازی شدی: ' + name);
+  // انتقال به صفحه بازی
 
-}
-
-
-
-// دریافت لیست بازیکنان
-
-socket.on('playersList',(players)=>{
-
-
-  const box =
-  document.getElementById('players');
-
-
-  box.innerHTML='';
-
-
-  if(players.length === 0){
-
-    box.innerHTML =
-    '<p>هنوز کسی وارد نشده</p>';
-
-    return;
-
-  }
-
-
-
-  players.forEach(player=>{
-
-
-    const item =
-    document.createElement('p');
-
-
-    item.innerHTML =
-    '🐍 ' + player;
-
-
-    box.appendChild(item);
-
-
-  });
-
-
-
-});
-
-
-
-
-// ارسال پیام
-
-function sendMessage(){
-
-
-  const input =
-  document.getElementById('message');
-
-
-  const msg =
-  input.value.trim();
-
-
-
-  if(msg === '') return;
-
-
-
-  socket.emit(
-    'chatMessage',
-    msg
-  );
-
-
-
-  input.value='';
-
+  window.location.href = 'game.html';
 
 }
-
-
-
-
-
-// دریافت پیام
-
-socket.on('chatMessage',(data)=>{
-
-
-  const box =
-  document.getElementById('messages');
-
-
-
-  const message =
-  document.createElement('p');
-
-
-
-  message.innerHTML =
-
-  '<b>'
-  + data.name
-  + ':</b> '
-  + data.message;
-
-
-
-  box.appendChild(message);
-
-
-
-  // همیشه آخرین پیام دیده شود
-
-  box.scrollTop =
-  box.scrollHeight;
-
-
-
-});
-
-
 
 </script>
 
