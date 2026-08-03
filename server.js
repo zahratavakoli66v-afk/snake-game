@@ -11,7 +11,9 @@ const io = new Server(server);
 
 // فایل‌های پوشه public را نمایش بده
 app.use(express.static("public"));
-
+app.get("/", (req, res) => {
+    res.send("Snake server is working!");
+});
 
 // لیست بازیکنان
 let players = {};
