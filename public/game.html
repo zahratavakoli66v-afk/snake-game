@@ -1,365 +1,308 @@
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <title>بازی مار آنلاین</title>
+<meta charset="UTF-8">
+<title>بازی مار آنلاین</title>
+<style>
+body{
+  margin:0;
+  background:#1e1e1e;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
+}
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      direction: rtl;
-      background: #1e1e1e;
-      color: white;
-      text-align: center;
-    }
+.header{
+  background:#2c3e50;
+  padding:15px;
+  font-size:22px;
+}
 
-    .header {
-      background: #2c3e50;
-      padding: 15px;
-      font-size: 22px;
-      font-weight: bold;
-    }
+.container{
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  flex-wrap:wrap;
+  padding:20px;
+}
 
-    .container {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 20px;
-      padding: 20px;
-      flex-wrap: wrap;
-    }
+canvas{
+  background:#111;
+  border:3px solid #27ae60;
+  border-radius:10px;
+}
 
-    canvas {
-      background: #111;
-      border: 3px solid #27ae60;
-      border-radius: 10px;
-    }
+.sidebar{
+  width:300px;
+  background:#2d2d2d;
+  border-radius:10px;
+  padding:15px;
+}
 
-    .sidebar {
-      width: 300px;
-      background: #2d2d2d;
-      border-radius: 10px;
-      padding: 15px;
-    }
+#messages{
+  height:220px;
+  overflow-y:auto;
+  background:#1a1a1a;
+  border-radius:8px;
+  padding:10px;
+  text-align:right;
+}
 
-    .sidebar h3 {
-      color: #27ae60;
-      margin-top: 0;
-    }
+#messages p{
+  background:#333;
+  padding:6px;
+  border-radius:6px;
+}
 
-    #players {
-      min-height: 100px;
-      margin-bottom: 20px;
-    }
+input{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  margin:10px 0;
+  box-sizing:border-box;
+}
 
-    #messages {
-      background: #1a1a1a;
-      height: 220px;
-      overflow-y: auto;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 10px;
-      text-align: right;
-    }
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#27ae60;
+  color:white;
+  cursor:pointer;
+  font-size:18px;
+}
 
-    #messages p {
-      margin: 5px 0;
-      padding: 6px;
-      background: #333;
-      border-radius: 6px;
-    }
+#startBtn{
+  background:#f39c12;
+}
 
-    #messages b {
-      color: #27ae60;
-    }
+#status{
+  margin:10px 0;
+  color:#f1c40f;
+}
 
-    input {
-      width: calc(100% - 20px);
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      margin-bottom: 10px;
-    }
+.controls{
+  margin:25px auto;
+  width:320px;
+  display:grid;
+  grid-template-columns:100px 100px 100px;
+  grid-template-rows:100px 100px;
+  gap:10px;
+  justify-content:center;
+}
 
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #27ae60;
-      color: white;
-      cursor: pointer;
-      font-size: 16px;
-    }
+.control-btn{
+  width:100px;
+  height:100px;
+  font-size:40px;
+  background:#34495e;
+  border-radius:16px;
+}
 
-    button:hover {
-      background: #219150;
-    }
+.control-btn:active{
+  background:#27ae60;
+}
 
-    .back {
-      margin-top: 10px;
-      background: #c0392b;
-    }
-
-    .back:hover {
-      background: #a93226;
-    }
-
-    /* کنترل‌های جهت */
-    .controls {
-      margin: 20px auto;
-      width: 220px;
-      display: grid;
-      grid-template-columns: 70px 70px 70px;
-      grid-template-rows: 70px 70px;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    .control-btn {
-      width: 70px;
-      height: 70px;
-      font-size: 28px;
-      background: #34495e;
-      border-radius: 12px;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-    }
-
-    .control-btn:active {
-      background: #27ae60;
-      transform: scale(0.95);
-    }
-
-    .empty {
-      visibility: hidden;
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      canvas {
-        width: 90vw;
-        height: 90vw;
-        max-width: 500px;
-        max-height: 500px;
-      }
-    }
-  </style>
-
+.empty{
+  visibility:hidden;
+}
+</style>
 </head>
-
 <body>
 
-<div class="header">
-  🐍 بازی مار آنلاین
-</div>
+<div class="header">🐍 بازی مار آنلاین</div>
 
 <div class="container">
 
 <canvas id="gameCanvas" width="500" height="500"></canvas>
 
-  <div class="sidebar">
+<div class="sidebar">
 
-```
 <h3>👤 بازیکن</h3>
 <p id="playerName"></p>
 
+<div id="status">در انتظار تعیین میزبان...</div>
+
+<button id="startBtn" disabled>🎮 شروع بازی</button>
+
 <h3>👥 بازیکنان آنلاین</h3>
-<div id="players">در حال اتصال...</div>
+<div id="players"></div>
 
 <h3>💬 چت</h3>
 <div id="messages"></div>
 
 <input id="message" placeholder="پیام خود را بنویس">
+
 <button onclick="sendMessage()">ارسال</button>
-
-<button class="back" onclick="exitGame()">خروج از بازی</button>
-```
-
-  </div>
 
 </div>
 
-<!-- دکمه‌های جهت -->
+</div>
 
 <div class="controls">
-  <div class="empty"></div>
-  <button class="control-btn" onclick="setDirection('UP')">⬆️</button>
-  <div class="empty"></div>
+<div class="empty"></div>
+<button class="control-btn" onclick="setDirection('UP')">⬆️</button>
+<div class="empty"></div>
 
-<button class="control-btn" onclick="setDirection('LEFT')">⬅️</button> <button class="control-btn" onclick="setDirection('DOWN')">⬇️</button> <button class="control-btn" onclick="setDirection('RIGHT')">➡️</button>
-
+<button class="control-btn" onclick="setDirection('RIGHT')">➡️</button>
+<button class="control-btn" onclick="setDirection('DOWN')">⬇️</button>
+<button class="control-btn" onclick="setDirection('LEFT')">⬅️</button>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-
 <script>
-
 const socket = io();
 
 const name = localStorage.getItem('playerName') || 'بازیکن';
-
 document.getElementById('playerName').innerText = name;
 
-// ورود به سرور
-socket.emit('joinGame', { name });
+socket.emit('joinGame',{name});
 
-// لیست بازیکنان
-socket.on('playersList', (players) => {
+let gameRunning = false;
+let isHost = false;
+
+socket.on('playersList', players => {
   const box = document.getElementById('players');
   box.innerHTML = '';
-  players.forEach(player => {
-    const p = document.createElement('p');
-    p.innerText = '🐍 ' + player;
-    box.appendChild(p);
+  players.forEach(p => {
+    box.innerHTML += '<p>🐍 '+p+'</p>';
   });
 });
 
-// ارسال پیام
+socket.on('hostInfo', data => {
+  isHost = socket.id === data.hostId;
+
+  const status = document.getElementById('status');
+  const btn = document.getElementById('startBtn');
+
+  if(isHost){
+    status.innerText = data.gameStarted ? 'بازی در حال اجراست' : 'شما میزبان هستید';
+    btn.disabled = data.gameStarted;
+  }else{
+    status.innerText = data.gameStarted ? 'بازی در حال اجراست' : 'در انتظار شروع بازی توسط میزبان';
+    btn.disabled = true;
+  }
+});
+
+document.getElementById('startBtn').onclick = () => {
+  socket.emit('startGame');
+};
+
+socket.on('gameStarted', () => {
+  gameRunning = true;
+  document.getElementById('status').innerText = 'بازی شروع شد';
+});
+
 function sendMessage(){
   const input = document.getElementById('message');
   const msg = input.value.trim();
-  if(msg === '') return;
+  if(!msg) return;
   socket.emit('chatMessage', msg);
   input.value = '';
 }
 
-// دریافت پیام
-socket.on('chatMessage', (data) => {
+socket.on('chatMessage', data => {
   const box = document.getElementById('messages');
-  const p = document.createElement('p');
-  p.innerHTML = '<b>' + data.name + ':</b> ' + data.message;
-  box.appendChild(p);
+  box.innerHTML += '<p><b>'+data.name+':</b> '+data.message+'</p>';
   box.scrollTop = box.scrollHeight;
 });
-
-// خروج
-function exitGame(){
-  localStorage.removeItem('playerName');
-  window.location.href = 'index.html';
-}
-
-// ======== بازی مار ========
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const grid = 20;
 
 let snake = [
-  {x:10, y:10},
-  {x:9, y:10},
-  {x:8, y:10}
+  {x:10,y:10},
+  {x:9,y:10},
+  {x:8,y:10}
 ];
 
 let direction = 'RIGHT';
-
-let food = { x:15, y:12 };
+let food = {x:15,y:12};
 let score = 0;
 
-// تغییر جهت
 function setDirection(dir){
-  if(dir === 'UP' && direction !== 'DOWN') direction = 'UP';
-  if(dir === 'DOWN' && direction !== 'UP') direction = 'DOWN';
-  if(dir === 'LEFT' && direction !== 'RIGHT') direction = 'LEFT';
-  if(dir === 'RIGHT' && direction !== 'LEFT') direction = 'RIGHT';
+  if(dir==='UP' && direction!=='DOWN') direction='UP';
+  if(dir==='DOWN' && direction!=='UP') direction='DOWN';
+  if(dir==='LEFT' && direction!=='RIGHT') direction='LEFT';
+  if(dir==='RIGHT' && direction!=='LEFT') direction='RIGHT';
 }
 
-// کیبورد
-document.addEventListener('keydown', (e) => {
-  if(e.key === 'ArrowUp') setDirection('UP');
-  if(e.key === 'ArrowDown') setDirection('DOWN');
-  if(e.key === 'ArrowLeft') setDirection('LEFT');
-  if(e.key === 'ArrowRight') setDirection('RIGHT');
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowUp') setDirection('UP');
+  if(e.key==='ArrowDown') setDirection('DOWN');
+  if(e.key==='ArrowLeft') setDirection('LEFT');
+  if(e.key==='ArrowRight') setDirection('RIGHT');
 });
 
-// رسم
 function draw(){
-  ctx.fillStyle = '#111';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle='#111';
+  ctx.fillRect(0,0,500,500);
 
-  ctx.fillStyle = 'red';
-  ctx.fillRect(food.x * grid, food.y * grid, grid, grid);
+  ctx.fillStyle='red';
+  ctx.fillRect(food.x*grid, food.y*grid, grid, grid);
 
-  ctx.fillStyle = '#27ae60';
-  snake.forEach(part => {
-    ctx.fillRect(part.x * grid, part.y * grid, grid, grid);
+  ctx.fillStyle='#27ae60';
+  snake.forEach(p => {
+    ctx.fillRect(p.x*grid, p.y*grid, grid, grid);
   });
 
-  ctx.fillStyle = 'white';
-  ctx.font = '18px Arial';
-  ctx.fillText('امتیاز: ' + score, 10, 25);
+  ctx.fillStyle='white';
+  ctx.font='18px Arial';
+  ctx.fillText('امتیاز: '+score,10,25);
+
+  if(!gameRunning){
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    ctx.fillRect(0,0,500,500);
+    ctx.fillStyle='white';
+    ctx.font='28px Arial';
+    ctx.fillText('در انتظار شروع بازی',120,250);
+  }
 }
 
-// حرکت
 function update(){
-  const head = { x: snake[0].x, y: snake[0].y };
+  if(!gameRunning) return;
 
-  if(direction === 'UP') head.y--;
-  if(direction === 'DOWN') head.y++;
-  if(direction === 'LEFT') head.x--;
-  if(direction === 'RIGHT') head.x++;
+  const head={...snake[0]};
 
-  if(
-    head.x < 0 ||
-    head.y < 0 ||
-    head.x >= canvas.width / grid ||
-    head.y >= canvas.height / grid
-  ){
-    alert('بازی تمام شد! امتیاز: ' + score);
-    resetGame();
+  if(direction==='UP') head.y--;
+  if(direction==='DOWN') head.y++;
+  if(direction==='LEFT') head.x--;
+  if(direction==='RIGHT') head.x++;
+
+  if(head.x<0 || head.y<0 || head.x>=25 || head.y>=25){
+    gameRunning=false;
+    alert('بازی تمام شد');
     return;
-  }
-
-  for(let part of snake){
-    if(part.x === head.x && part.y === head.y){
-      alert('بازی تمام شد! امتیاز: ' + score);
-      resetGame();
-      return;
-    }
   }
 
   snake.unshift(head);
 
-  if(head.x === food.x && head.y === food.y){
+  if(head.x===food.x && head.y===food.y){
     score++;
-    food = {
-      x: Math.floor(Math.random() * (canvas.width / grid)),
-      y: Math.floor(Math.random() * (canvas.height / grid))
+    food={
+      x:Math.floor(Math.random()*25),
+      y:Math.floor(Math.random()*25)
     };
   }else{
     snake.pop();
   }
 }
 
-// ریست
-function resetGame(){
-  snake = [
-    {x:10, y:10},
-    {x:9, y:10},
-    {x:8, y:10}
-  ];
-  direction = 'RIGHT';
-  score = 0;
-  food = { x:15, y:12 };
-}
-
-// حلقه بازی
-function gameLoop(){
+function loop(){
   update();
   draw();
 }
 
 draw();
-setInterval(gameLoop, 150);
 
+// سرعت کمتر (250 میلی‌ثانیه)
+setInterval(loop,250);
 </script>
 
 </body>
 </html>
+```
