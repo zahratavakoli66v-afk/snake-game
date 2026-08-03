@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>بازی مار آنلاین</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      background: #1e1e1e;
+      color: white;
+    }
+
+    .header {
+      background: #2c3e50;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+
+    canvas {
+      background: #111;
+      border: 3px solid #27ae60;
+      border-radius: 10px;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #2d2d2d;
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    .sidebar h3 {
+      margin-top: 0;
+      color: #27ae60;
+    }
+
+    #players {
+      min-height: 120px;
+      margin-bottom: 20px;
+    }
+
+    #messages {
+      background: #1a1a1a;
+      height: 220px;
+      overflow-y: auto;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    #messages p {
+      margin: 5px 0;
+      padding: 6px;
+      background: #333;
+      border-radius: 6px;
+    }
+
+    #messages b {
+      color: #27ae60;
+    }
+
+    input {
+      width: calc(100% - 20px);
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #27ae60;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #219150;
+    }
+
+    .back {
+      margin-top: 15px;
+      background: #c0392b;
+    }
+
+    .back:hover {
+      background: #a93226;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<div class="header">
+  🐍 بازی مار آنلاین
+</div>
+
+<div class="container">
+
+<canvas id="gameCanvas" width="500" height="500"></canvas>
+
+  <div class="sidebar">
+
+```
+<h3>👤 بازیکن</h3>
+
+<p id="playerName"></p>
+
+<h3>👥 بازیکنان آنلاین</h3>
+
+<div id="players">
+  در حال اتصال...
+</div>
+
+<h3>💬 چت</h3>
+
+<div id="messages"></div>
+
+<input id="message" placeholder="پیام خود را بنویس">
+
+<button onclick="sendMessage()">ارسال</button>
+
+<button class="back" onclick="exitGame()">
+  خروج از بازی
+</button>
+```
+
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const socket = io();
+
+const name = localStorage.getItem('playerName') || 'بازیکن';
+
+document.getElementById('playerName').innerText = name;
+
+// ورود به سرور
+socket.emit('joinGame', { name });
+
+// لیست بازیکنان
+socket.on('playersList', (players) => {
+
+  const box = document.getElementById('players');
+
+  box.innerHTML = '';
+
+  players.forEach(player => {
+
+    const p = document.createElement('p');
+
+    p.innerText = '🐍 ' + player;
+
+    box.appendChild(p);
+
+  });
+
+});
+
+// ارسال پیام
+function sendMessage(){
+
+  const input = document.getElementById('message');
+
+  const msg = input.value.trim();
+
+  if(msg === '') return;
+
+  socket.emit('chatMessage', msg);
+
+  input.value = '';
+
+}
+
+// دریافت پیام
+socket.on('chatMessage', (data) => {
+
+  const box = document.getElementById('messages');
+
+  const p = document.createElement('p');
+
+  p.innerHTML = '<b>' + data.name + ':</b> ' + data.message;
+
+  box.appendChild(p);
+
+  box.scrollTop = box.scrollHeight;
+
+});
+
+// خروج از بازی
+function exitGame(){
+
+  localStorage.removeItem('playerName');
+
+  window.location.href = 'index.html';
+
+}
+
+// زمین بازی (فعلاً نمونه)
+const canvas = document.getElementById('gameCanvas');
+
+const ctx = canvas.getContext('2d');
+
+ctx.fillStyle = '#27ae60';
+
+ctx.fillRect(220, 220, 20, 20);
+
+ctx.fillStyle = 'white';
+
+ctx.font = '18px Arial';
+
+ctx.fillText('مرحله بعد: حرکت مار', 140, 40);
+
+</script>
+
+</body>
+</html>
