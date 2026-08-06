@@ -1,302 +1,50 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تنیس آنلاین</title>
-
 <style>
-body{
-  margin:0;
-  background:#0f172a;
-  color:white;
-  font-family:Tahoma,Arial;
-  overflow:hidden;
-}
-
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:12px 16px;
-  background:#111827;
-  font-size:18px;
-}
-
-#status{
-  text-align:center;
-  padding:8px;
-  color:#fbbf24;
-}
-
-#court{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:calc(100vh - 160px);
-}
-
-canvas{
-  background:#111827;
-  border:3px solid #22c55e;
-  border-radius:16px;
-  touch-action:none;
-}
-
-.bottom{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:#111827;
-  padding:10px;
-}
-
-#queue{
-  text-align:center;
-  margin-bottom:8px;
-}
-
-#players{
-  display:flex;
-  justify-content:center;
-  gap:20px;
-  flex-wrap:wrap;
-}
-
-.player{
-  background:#1f2937;
-  padding:8px 12px;
-  border-radius:10px;
-}
+body{margin:0;background:#0f172a;color:#fff;font-family:Tahoma,Arial;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}
+canvas{background:#111827;border:3px solid #22c55e;border-radius:16px;touch-action:none}
 </style>
 </head>
-
 <body>
-
-<div class="top">
-  <div>⏱ <span id="timer">180</span></div>
-  <div id="match">در انتظار بازیکن</div>
-  <div id="me"></div>
-</div>
-
-<div id="status">برای حرکت راکت، انگشت خود را روی زمین بازی بکشید.</div>
-
-<div id="court">
-  <canvas id="game" width="400" height="600"></canvas>
-</div>
-
-<div class="bottom">
-  <div id="queue">صف انتظار: -</div>
-  <div id="players"></div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
+<canvas id="game" width="400" height="600"></canvas>
 <script>
-const socket = io();
+const c=document.getElementById('game');
+const ctx=c.getContext('2d');
+let paddle={x:150,w:100,h:10};
+let ball={x:200,y:300,vx:3,vy:4,r:8};
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-const name =
-  localStorage.getItem("tennisName") ||
-  "بازیکن";
-
-document.getElementById("me").innerText = name;
-
-let myRole = "spectator";
-let gameState = null;
-
-// ورود
-socket.emit("join", { name });
-
-// نام تکراری
-socket.on("joinError", msg => {
-  alert(msg);
-  localStorage.removeItem("tennisName");
-  location.href = "/";
-});
-
-// شروع مسابقه
-socket.on("matchStarted", data => {
-  document.getElementById("match").innerText =
-    data.bottom + " vs " + data.top;
-
-  if(data.bottom===name) myRole="bottom";
-  else if(data.top===name) myRole="top";
-  else myRole="spectator";
-});
-
-// تایمر
-socket.on("timer", t => {
-  document.getElementById("timer").innerText = t;
-});
-
-// صف انتظار
-socket.on("queueUpdate", data => {
-  const q =
-    data.queue.length ?
-    data.queue.join(" ، ") :
-    "خالی";
-
-  document.getElementById("queue").innerText =
-    "صف انتظار: " + q;
-});
-
-// جدول امتیازات
-socket.on("playersList", list => {
-  const box = document.getElementById("players");
-  box.innerHTML = "";
-
-  list
-    .sort((a,b)=>b.totalScore-a.totalScore)
-    .forEach(p => {
-      const div = document.createElement("div");
-      div.className = "player";
-      div.innerText =
-        p.name + " : " + p.totalScore;
-      box.appendChild(div);
-    });
-});
-
-// پایان مسابقه
-socket.on("matchFinished", data => {
-  alert(
-    "برنده: " +
-    data.winner +
-    "\\nامتیاز کل: " +
-    data.totalScore
-  );
-});
-
-// وضعیت بازی
-socket.on("gameState", state => {
-  gameState = state;
-  draw();
-});
-
-// رسم
 function draw(){
-
-  if(!gameState) return;
-
-  ctx.clearRect(0,0,400,600);
-
-  // زمین
-  ctx.strokeStyle = "#374151";
-  ctx.setLineDash([10,10]);
-  ctx.beginPath();
-  ctx.moveTo(0,300);
-  ctx.lineTo(400,300);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // توپ
-  ctx.fillStyle = "#facc15";
-  ctx.beginPath();
-  ctx.arc(
-    gameState.ball.x,
-    gameState.ball.y,
-    8,
-    0,
-    Math.PI*2
-  );
-  ctx.fill();
-
-  // راکت پایین
-  if(gameState.bottom){
-    drawPaddle(
-      gameState.bottom.paddleX,
-      580,
-      "#22c55e"
-    );
-
-    drawScore(
-      gameState.bottom.score,
-      360,
-      560
-    );
-  }
-
-  // راکت بالا
-  if(gameState.top){
-    drawPaddle(
-      gameState.top.paddleX,
-      10,
-      "#ef4444"
-    );
-
-    drawScore(
-      gameState.top.score,
-      360,
-      40
-    );
-  }
-
-  // اگر بازیکن بالا هستیم،
-  // زمین را برعکس نمایش بده
-  if(myRole==="top"){
-    // در نسخه کامل،
-    // مختصات برعکس رندر می‌شود.
-    // فعلاً فقط نقش مشخص شده است.
-  }
-
+ ctx.clearRect(0,0,400,600);
+ ctx.fillStyle='#22c55e';
+ ctx.fillRect(paddle.x,580,paddle.w,paddle.h);
+ ctx.fillStyle='#ef4444';
+ ctx.fillRect(paddle.x,10,paddle.w,paddle.h);
+ ctx.fillStyle='#facc15';
+ ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();
 }
 
-function drawPaddle(x,y,color){
-  ctx.fillStyle = color;
-  ctx.fillRect(x,y,100,10);
+function update(){
+ ball.x+=ball.vx;
+ ball.y+=ball.vy;
+ if(ball.x<ball.r||ball.x>400-ball.r) ball.vx*=-1;
+ if(ball.y>572&&ball.x>paddle.x&&ball.x<paddle.x+paddle.w) ball.vy=-Math.abs(ball.vy);
+ if(ball.y<28&&ball.x>paddle.x&&ball.x<paddle.x+paddle.w) ball.vy=Math.abs(ball.vy);
+ if(ball.y<0||ball.y>600){ball.x=200;ball.y=300;ball.vx=3*(Math.random()>0.5?1:-1);ball.vy=4*(ball.y<0?1:-1);}
+ draw();
+ requestAnimationFrame(update);
 }
 
-function drawScore(score,x,y){
-  ctx.fillStyle = "white";
-  ctx.font = "20px Arial";
-  ctx.fillText(score,x,y);
+function move(clientX){
+ const r=c.getBoundingClientRect();
+ paddle.x=Math.max(0,Math.min(300,clientX-r.left-50));
 }
-
-// کنترل با لمس
-canvas.addEventListener("touchmove", e => {
-
-  e.preventDefault();
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  const touch =
-    e.touches[0];
-
-  const x =
-    touch.clientX - rect.left - 50;
-
-  socket.emit(
-    "movePaddle",
-    x
-  );
-
-});
-
-// کنترل با ماوس
-canvas.addEventListener("mousemove", e => {
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  const x =
-    e.clientX - rect.left - 50;
-
-  socket.emit(
-    "movePaddle",
-    x
-  );
-
-});
-
-window.addEventListener("beforeunload", () => {
-  socket.disconnect();
-});
+c.addEventListener('touchmove',e=>{e.preventDefault();move(e.touches[0].clientX);},{passive:false});
+c.addEventListener('mousemove',e=>move(e.clientX));
+update();
 </script>
-
 </body>
 </html>
-

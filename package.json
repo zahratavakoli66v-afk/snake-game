@@ -1,25 +1,10 @@
 {
-"name": "online-pong",
-"version": "1.0.0",
-"description": "Online multiplayer pong game with queue system",
-"main": "server.js",
-"scripts": {
-"start": "node server.js"
-},
-"keywords": [
-"pong",
-"multiplayer",
-"socket.io",
-"express"
-],
-"author": "zahratavakoli66v-afk",
-"license": "ISC",
-"type": "commonjs",
-"dependencies": {
-"express": "^5.2.1",
-"socket.io": "^4.8.3"
-},
-"engines": {
-"node": ">=18"
-}
+  "name": "pong-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
 }

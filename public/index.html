@@ -1,107 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ورود به بازی تنیس آنلاین</title>
-
+<title>ورود به تنیس آنلاین</title>
 <style>
-body{
-  margin:0;
-  font-family:Tahoma,Arial;
-  background:#0f172a;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-
-.box{
-  width:320px;
-  background:#1e293b;
-  padding:30px;
-  border-radius:20px;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-}
-
-h1{
-  margin-top:0;
-  font-size:28px;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  font-size:18px;
-  border:none;
-  border-radius:12px;
-  margin:15px 0;
-  box-sizing:border-box;
-}
-
-button{
-  width:100%;
-  padding:14px;
-  font-size:20px;
-  border:none;
-  border-radius:12px;
-  background:#22c55e;
-  color:white;
-  cursor:pointer;
-}
-
-#error{
-  color:#f87171;
-  margin-top:12px;
-  min-height:24px;
-}
+body{margin:0;background:#0f172a;color:#fff;font-family:Tahoma,Arial;display:flex;justify-content:center;align-items:center;height:100vh}
+.card{background:#1e293b;padding:28px;border-radius:18px;width:320px;text-align:center}
+input{width:100%;padding:12px;border-radius:10px;border:none;margin:14px 0;box-sizing:border-box}
+button{width:100%;padding:12px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:18px}
 </style>
 </head>
-
 <body>
-
-<div class="box">
-  <h1>🎾 تنیس آنلاین</h1>
-  <p>نام کاربری خود را وارد کنید</p>
-
-  <input id="name" placeholder="نام کاربری" maxlength="20">
-
-  <button onclick="enterGame()">ورود به بازی</button>
-
-  <div id="error"></div>
+<div class="card">
+<h1>🎾 تنیس آنلاین</h1>
+<input id="name" placeholder="نام کاربری">
+<button onclick="enter()">ورود به بازی</button>
 </div>
-
 <script>
-function enterGame(){
-
-  const name =
-    document.getElementById("name")
-    .value
-    .trim();
-
-  if(name===""){
-
-    document.getElementById("error")
-      .innerText =
-      "لطفاً نام کاربری وارد کنید";
-
-    return;
-
-  }
-
-  localStorage.setItem(
-    "tennisName",
-    name
-  );
-
-  location.href =
-    "/game.html";
-
+function enter(){
+ const name=document.getElementById('name').value.trim();
+ if(!name){alert('نام کاربری را وارد کنید');return;}
+ localStorage.setItem('tennisName',name);
+ location.href='game.html';
 }
 </script>
-
 </body>
 </html>
